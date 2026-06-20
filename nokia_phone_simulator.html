@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاكي نوكيا</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.14.0/dist/tabler-icons.min.css">
+</head>
+<body>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --theme-bg-top: #ffffff;
+  --theme-bg-bot: #fdfdfd;
+  --screen-bg: #c8e6c9;
+  --screen-text: #1b5e20;
+  --screen-text-dim: #388e3c;
+  --screen-accent: #2e7d32;
+  --screen-accent2: #4caf50;
+  --btn-grad-1: #37474f;
+  --btn-grad-2: #263238;
+  --btn-border: #1c313a;
+  --btn-text: #cfd8dc;
+}
+body { font-family: system-ui; text-align: center; padding: 20px 0; background: #f4f1ea; }
+i { position: relative; overflow: hidden; }
+
+.wrapper { display: flex; justify-content: center; align-items: flex-start; gap: 60px; padding: 20px 0; min-height: 700px; flex-wrap: wrap; }
+
+.phone-body {
+  width: 240px;
+  user-select: none;
+  background: linear-gradient(180deg, var(--theme-bg-top) 0%, var(--theme-bg-top) 40%, var(--theme-bg-bot) 100%);
+  border-radius: 32px 32px 40px 40px;
+  padding: 14px 14px 20px;
+  box-shadow: 0 4px 10px #0000001c, inset 3px 3px 3px rgb(0 0 0 / 9%), inset -3px -3px 3px rgb(0 0 0 / 9%);
+  transition: background 0.4s;
+  position: relative;
+}
+.phone-body.shake { animation: phoneShake 0.3s; }
+@keyframes phoneShake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.speaker-top { display: flex; justify-content: center; gap: 3px; margin-bottom: 8px; }
+.speaker-hole { width: 3px; height: 3px; background: rgb(41 41 41 / 49%); border-radius: 50%; }
+
+.screen-frame { background: #0d0d0d; border-radius: 10px; padding: 5px; margin-bottom: 10px; border: 2px solid #000; }
+
+.screen {
+  width: 100%; height: 218px;
+  background: var(--screen-bg);
+  border-radius: 6px; overflow: hidden; position: relative;
+  font-size: 11px; color: var(--screen-text);
+  transition: background 0.4s;
+}
+
+.lock-screen {
+  position: absolute; inset: 0; background: #000; z-index: 50;
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  color: #66bb6a; transition: opacity 0.5s;
+}
+.lock-screen.hidden { opacity: 0; pointer-events: none; }
+.lock-hint { font-size: 8px; color: #4caf50; margin-top: 10px; opacity: 0.7; animation: lockPulse 2s infinite; }
+@keyframes lockPulse { 0%,100%{opacity:0.3;} 50%{opacity:0.9;} }
+.lock-clock { font-size: 22px; font-weight: bold; }
+.lock-date { font-size: 9px; color: #4caf50; margin-top: 2px; }
+.lock-padlock { font-size: 28px; margin-bottom: 6px; color: #4caf50; }
+
+.boot-screen {
+  position: absolute; inset: 0; background: #000; z-index: 60;
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  opacity: 0; pointer-events: none; transition: opacity 0.4s;
+  overflow: hidden;
+}
+.boot-screen.active { opacity: 1; pointer-events: all; }
+.boot-hands { width: 80px; height: 80px; }
+.boot-text { color: #4caf50; font-size: 10px; margin-top: 8px; letter-spacing: 2px; font-weight: bold; }
+
+.progress-hold {
+  position: absolute; bottom: 0; left: 0; height: 2px; background: #4caf50; width: 0%;
+  transition: width linear;
+}
+
+.status-bar {
+  background: var(--screen-accent); color: var(--screen-bg);
+  display: flex; justify-content: space-between; padding: 2px 5px; font-size: 9px; font-weight: 500;
+}
+.screen-content { padding: 4px 5px; height: calc(100% - 36px); overflow: hidden; }
+.softkey-bar {
+  background: var(--screen-text); color: var(--screen-bg);
+  display: flex; justify-content: space-between; padding: 2px 5px; font-size: 9px;
+  position: absolute; bottom: 0; width: 100%;
+}
+
+.home-screen-title { text-align: center; font-size: 13px; font-weight: bold; color: var(--screen-text); margin: 4px 0; }
+.home-time { text-align: center; font-size: 26px; font-weight: bold; color: var(--screen-text); line-height: 1; }
+.home-date { text-align: center; font-size: 9px; color: var(--screen-accent); margin-bottom: 4px; }
+
+.menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 2px; }
+.menu-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(46,125,50,0.15); border-radius: 4px; padding: 4px 2px; cursor: pointer;
+  font-size: 7px; color: var(--screen-text); text-align: center; min-height: 36px;
+  transition: background 0.1s; border: 1px solid transparent;
+}
+.menu-item:hover { background: rgba(46,125,50,0.35); }
+.menu-item.selected { border-color: var(--screen-text); background: rgba(46,125,50,0.3); }
+.menu-item i { font-size: 14px; margin-bottom: 1px; }
+
+.app-header {
+  background: var(--screen-accent); color: var(--screen-bg);
+  padding: 3px 5px; font-size: 10px; font-weight: bold; display: flex; align-items: center; gap: 4px;
+}
+.app-header i { font-size: 11px; }
+
+.app-body { padding: 4px 5px; overflow: auto; scrollbar-width: thin; height: calc(100% - 20px); }
+.app-body div { white-space: normal; word-wrap: break-word; }
+
+.list-item {
+  display: flex; align-items: center; gap: 5px; padding: 3px 2px;
+  border-bottom: 1px solid rgba(27,94,32,0.2); font-size: 9px; color: var(--screen-text); cursor: pointer;
+}
+.list-item.kbd-selected { background: rgba(46,125,50,0.35); outline: 1px solid var(--screen-text); }
+.list-item:hover { background: rgba(46,125,50,0.2); }
+.list-item i { font-size: 12px; color: var(--screen-accent2); flex-shrink: 0; }
+.list-item .sub { font-size: 8px; color: var(--screen-accent2); direction: ltr; }
+
+.calc-display {
+  background: var(--screen-text); color: var(--screen-bg); text-align: right; padding: 4px 6px;
+  font-size: 16px; font-weight: bold; border-radius: 3px; min-height: 28px; margin-bottom: 4px; word-break: break-all;
+}
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+.calc-btn {
+  background: rgba(46,125,50,0.2); border: 1px solid rgba(27,94,32,0.3); color: var(--screen-text);
+  font-size: 9px; padding: 4px 2px; border-radius: 3px; cursor: pointer; text-align: center; font-weight: bold;
+}
+.calc-btn:hover { background: rgba(46,125,50,0.4); }
+.calc-btn.op { color: var(--screen-accent); }
+.calc-btn.eq { background: rgba(46,125,50,0.5); }
+
+.clock-display { text-align: center; margin-top: 8px; }
+.clock-big { font-size: 28px; font-weight: bold; color: var(--screen-text); }
+.clock-date { font-size: 9px; color: var(--screen-accent2); }
+.clock-secs { font-size: 14px; color: var(--screen-accent); }
+
+.alarm-item { display: flex; justify-content: space-between; align-items: center; padding: 3px 2px; border-bottom: 1px solid rgba(27,94,32,0.2); font-size: 9px; color: var(--screen-text); }
+.toggle-btn { width: 20px; height: 10px; border-radius: 5px; background: var(--screen-accent2); position: relative; cursor: pointer; }
+.toggle-btn.off { background: rgba(27,94,32,0.3); }
+.toggle-btn::after { content: ''; position: absolute; width: 8px; height: 8px; background: white; border-radius: 50%; top: 1px; right: 1px; transition: right 0.2s; }
+.toggle-btn.off::after { right: auto; left: 1px; }
+
+.settings-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); font-size: 9px; color: var(--screen-text); cursor: pointer; }
+.settings-item.kbd-selected { background: rgba(46,125,50,0.35); outline: 1px solid var(--screen-text); }
+.settings-item i { font-size: 11px; color: var(--screen-accent2); }
+.settings-item .arrow { font-size: 8px; color: var(--screen-accent2); }
+
+.note-area {
+  background: rgba(46,125,50,0.1); border: 1px solid rgba(27,94,32,0.3); border-radius: 3px; padding: 3px;
+  font-size: 9px; color: var(--screen-text); width: 100%; resize: none; height: 60px; font-family: inherit; outline: none;
+}
+
+.stopwatch-display { text-align: center; margin: 6px 0; }
+.sw-time { font-size: 24px; font-weight: bold; color: var(--screen-text); }
+.sw-ms { font-size: 14px; color: var(--screen-accent2); }
+.sw-btns { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+.sw-btn { background: rgba(46,125,50,0.3); border: 1px solid rgba(27,94,32,0.4); color: var(--screen-text); font-size: 8px; padding: 3px 8px; border-radius: 3px; cursor: pointer; }
+.sw-btn:hover { background: rgba(46,125,50,0.5); }
+
+.timer-display { text-align: center; margin: 4px 0; }
+.timer-big { font-size: 24px; font-weight: bold; color: var(--screen-text); }
+.timer-controls { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+.timer-btn { background: rgba(46,125,50,0.25); border: 1px solid rgba(27,94,32,0.3); color: var(--screen-text); font-size: 7px; padding: 2px 5px; border-radius: 3px; cursor: pointer; }
+
+.gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.gallery-thumb { height: 30px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+
+.radio-display { text-align: center; padding: 4px; }
+.radio-freq { font-size: 20px; font-weight: bold; color: var(--screen-text); }
+.radio-name { font-size: 9px; color: var(--screen-accent2); }
+.radio-bar { margin: 4px 0; height: 4px; background: rgba(27,94,32,0.2); border-radius: 2px; overflow: hidden; }
+.radio-fill { height: 100%; background: var(--screen-accent2); width: 60%; transition: width 0.3s; }
+
+.music-item { display: flex; align-items: center; gap: 4px; padding: 3px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); font-size: 9px; color: var(--screen-text); cursor: pointer; }
+.music-item.kbd-selected { background: rgba(46,125,50,0.35); }
+.music-item i { font-size: 11px; color: var(--screen-accent2); }
+
+.contact-avatar {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--screen-accent);
+  display: flex; align-items: center; justify-content: center; color: var(--screen-bg);
+  font-size: 8px; font-weight: bold; flex-shrink: 0;
+}
+
+.msg-bubble { margin: 3px 2px; padding: 3px 5px; border-radius: 6px; font-size: 8px; max-width: 80%; color: var(--screen-text); }
+.msg-in { background: rgba(46,125,50,0.2); align-self: flex-start; }
+.msg-out { background: rgba(46,125,50,0.4); align-self: flex-end; margin-left: auto; }
+.msg-time { font-size: 7px; color: var(--screen-accent2); text-align: right; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; margin-top: 2px; }
+.cal-day { text-align: center; font-size: 10px; color: var(--screen-text); padding: 0; line-height: 0; height: 24px; width: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.cal-day.header { color: var(--screen-accent2); font-weight: bold; font-size: 14px; cursor: default; }
+.cal-day.today { background: var(--screen-accent); color: var(--screen-bg); border-radius: 50%; }
+.cal-day.has-event { color: var(--screen-accent2); font-weight: bold; }
+.cal-day.kbd-selected { outline: 1px solid var(--screen-text); border-radius: 50%; }
+
+.progress-bar { height: 5px; background: rgba(27,94,32,0.2); border-radius: 2px; overflow: hidden; margin: 3px 0; }
+.progress-fill { height: 100%; background: var(--screen-accent2); border-radius: 2px; }
+
+.file-row { display: flex; align-items: center; gap: 4px; padding: 3px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); font-size: 9px; color: var(--screen-text); cursor: pointer; }
+.file-row.kbd-selected { background: rgba(46,125,50,0.35); }
+.file-row i { font-size: 12px; color: #66bb6a; }
+.file-size { font-size: 8px; color: var(--screen-accent2); margin-left: auto; }
+
+.call-row { display: flex; align-items: center; gap: 4px; padding: 3px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); font-size: 9px; color: var(--screen-text); cursor: pointer; }
+.call-row.kbd-selected { background: rgba(46,125,50,0.35); }
+.call-row .type { font-size: 11px; }
+.call-row .time { font-size: 8px; color: var(--screen-accent2); margin-left: auto; }
+.call-in { color: var(--screen-accent2); }
+.call-out { color: var(--screen-text); }
+.call-miss { color: #c62828; }
+
+.bt-device { display: flex; align-items: center; justify-content: space-between; padding: 3px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); font-size: 9px; color: var(--screen-text); }
+.pair-btn { background: rgba(46,125,50,0.3); border: 1px solid rgba(27,94,32,0.3); color: var(--screen-text); font-size: 7px; padding: 1px 4px; border-radius: 2px; cursor: pointer; }
+
+.camera-view {
+  background: #0d2010; height: 80px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  color: var(--screen-accent2); font-size: 10px; margin-bottom: 4px; position: relative; overflow: hidden;
+}
+.camera-corners { position: absolute; inset: 8px; border: 1px solid rgba(76,175,80,0.4); }
+.camera-corners::before, .camera-corners::after { content: ''; position: absolute; width: 10px; height: 10px; border-color: var(--screen-accent2); border-style: solid; }
+.camera-corners::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.camera-corners::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.theme-item { display: flex; align-items: center; gap: 5px; padding: 3px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); cursor: pointer; font-size: 9px; color: var(--screen-text); }
+.theme-item.kbd-selected { background: rgba(46,125,50,0.35); }
+.theme-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
+
+.app-store-item { display: flex; align-items: center; gap: 5px; padding: 3px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); font-size: 9px; color: var(--screen-text); }
+.app-icon-small { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.install-btn { margin-left: auto; background: rgba(46,125,50,0.3); border: 1px solid rgba(27,94,32,0.3); color: var(--screen-text); font-size: 10px; padding: 1px 4px; border-radius: 2px; cursor: pointer; }
+
+.nav-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px; }
+
+.d-pad { display: inline-flex; gap: 3px; margin: 0 auto 6px; width: 100%; }
+.d-btn {
+  height: 28px; flex: 1 1; background: linear-gradient(135deg, var(--btn-grad-1), var(--btn-grad-2));
+  border-radius: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  color: var(--btn-text); font-size: 12px; transition: background 0.1s; border: 1px solid var(--btn-border);
+}
+.d-btn:hover { filter: brightness(1.2); }
+.d-btn.center { background: linear-gradient(135deg, #1565c0, #0d47a1); color: white; font-size: 10px; font-weight: bold; }
+.d-btn.empty { background: transparent; border: none; cursor: default; display: none; }
+
+.soft-keys { display: grid; grid-template-columns: 1fr auto 1fr; gap: 4px; margin-bottom: 6px; }
+.soft-btn {
+  background: linear-gradient(135deg, var(--btn-grad-1), var(--btn-grad-2)); border-radius: 16px; height: 24px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--btn-text);
+  font-size: 9px; transition: background 0.1s; border: 1px solid var(--btn-border); user-select: none;
+}
+.soft-btn:hover { filter: brightness(1.2); }
+.soft-btn:active, .d-btn:active, .num-btn:active { padding-top: 2px; box-shadow: 0px 1px 2px #00000086 inset; }
+.call-btn { color: #a5d6a7; }
+.end-btn { color: #ffcdd2; }
+
+.num-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.num-btn {
+  background: linear-gradient(135deg, var(--btn-grad-1), var(--btn-grad-2)); border-radius: 20px; height: 26px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
+  color: var(--btn-text); font-size: 12px; font-weight: bold; transition: background 0.1s;
+  border: 1px solid var(--btn-border); line-height: 1; position: relative;
+}
+.num-btn:hover { filter: brightness(1.2); }
+.num-btn span { font-size: 6px; color: #90a4ae; letter-spacing: 0.5px; }
+
+.nokia-logo { top: -4px; position: relative; text-align: center; color: rgba(35, 35, 35, 0.37); font-size: 11px; font-weight: 800; letter-spacing: 3px; margin: 6px 0 2px; }
+
+.side-btn { position: absolute; width: 8px; border-radius: 4px; background: #263238; cursor: pointer; }
+
+.info-panel { width: 220px; flex-shrink: 0; }
+.info-card { background: var(--color-background-primary, #fff); border: 0.5px solid var(--color-border-tertiary, #ddd); border-radius: var(--border-radius-lg, 10px); padding: 12px; margin-bottom: 8px; text-align: left; }
+.info-title { font-size: 15px; font-weight: 500; color: var(--color-text-secondary, #555); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.app-btn {
+  display: flex; align-items: center; gap: 6px; padding: 5px 6px; cursor: pointer; font-size: 16px;
+  font-family: system-ui; color: var(--color-text-primary, #111); width: 100%; background: none; border: none;
+  transition: box-shadow ease 0.3s; text-align: left;
+}
+.app-btn:hover { background: aliceblue; }
+.app-btn:active { background: rgb(223, 236, 247); }
+.app-btn:focus-visible { outline: dashed 2px #3686ff; border: none; }
+.app-btn i { font-size: 18px; color: var(--color-text-secondary, #555); flex-shrink: 0; width: 18px; height: 18px; }
+.app-btn.active { position: sticky; outline: none !important; top: 0; bottom: 0; z-index: 14; background: white; font-weight: 500; box-shadow: 0px 1px 3px #363c4145, 0px -1px 3px #363c412b; }
+.app-btn.active i { color: #1565c0; }
+
+.section-divider {
+  font-size: 15px; color: var(--color-text-tertiary, #888); margin: 6px 0px 0px; padding: 4px 16px; padding-bottom: 5px;
+  text-transform: uppercase; letter-spacing: 0.5px; border-bottom: solid 0.1px #8fbbff; background: #e3f2ff;
+}
+#ccsaaa { line-height: 0; display: flex; align-items: center; position: relative; top: -2px; }
+.ccvvg { font-size: 20px; line-height: 0; font-family: math; padding-bottom: 2px; }
+
+.t9-bar {
+  display: flex; justify-content: space-between; align-items: center; background: rgba(46,125,50,0.15);
+  border-radius: 3px; padding: 2px 4px; margin-bottom: 3px; font-size: 7px; color: var(--screen-accent);
+}
+.compose-box {
+  background: rgba(46,125,50,0.1); border: 1px solid rgba(27,94,32,0.3); border-radius: 3px; padding: 4px;
+  font-size: 9px; color: var(--screen-text); min-height: 40px; margin-bottom: 4px; word-break: break-word;
+}
+.contact-search {
+  width: 100%; background: rgba(46,125,50,0.1); border: 1px solid rgba(27,94,32,0.3); border-radius: 3px;
+  padding: 2px 4px; font-size: 9px; color: var(--screen-text); margin-bottom: 3px; outline: none; font-family: inherit;
+}
+.lang-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px; border-bottom: 1px solid rgba(27,94,32,0.15); font-size: 9px; color: var(--screen-text); cursor: pointer; }
+.lang-item.kbd-selected { background: rgba(46,125,50,0.35); }
+
+@media (max-width: 700px) {
+  body {
+        padding: 5px 0;
+  }
+  .sr-only {
+    display: none !important;
+  }
+  .info-panel {
+    display: none;
+  }
+  .wrapper {
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+}
+
+</style>
+
+<h2 class="sr-only">محاكي هاتف نوكيا تفاعلي مع جميع التطبيقات وميزات إضافية</h2>
+
+<div class="wrapper">
+  <div class="info-panel" id="infoPanel">
+    <div class="info-card">
+      <div class="info-title">التطبيقات</div>
+      <div id="appList"></div>
+    </div>
+    <div class="info-card" id="helpCard">
+      <div class="info-title" id="helpTitle">مفاتيح التحكم</div>
+      <div style="font-size: 10px; color: var(--color-text-secondary, #555); line-height: 1.6;" id="helpBody">
+        <div>⬆⬇ للتنقل داخل الصفحة</div>
+        <div>⬅➡ فتح القائمة / رجوع</div>
+        <div>✅ اختيار / فتح</div>
+        <div>📞 اتصال</div>
+        <div>🔴 رجوع / إنهاء</div>
+        <div>اضغط مطولاً على □ لقفل الشاشة</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: sticky; top: 53px;direction: ltr;">
+    <div class="phone-body" id="phoneBody">
+      <div class="speaker-top">
+        <div class="speaker-hole"></div><div class="speaker-hole"></div>
+        <div class="speaker-hole"></div><div class="speaker-hole"></div>
+        <div class="speaker-hole"></div><div class="speaker-hole"></div>
+        <div class="speaker-hole"></div>
+      </div>
+
+      <div class="screen-frame">
+        <div class="screen" id="mainScreen">
+
+          <div class="lock-screen" id="lockScreen">
+            <div class="lock-padlock"><i class="ti ti-lock"></i></div>
+            <div class="lock-clock" id="lockClock">12:00</div>
+            <div class="lock-date" id="lockDate">السبت 1/1/2026</div>
+            <div class="lock-hint">اضغط مطولاً على □ للفتح</div>
+          </div>
+
+          <div class="boot-screen" id="bootScreen">
+            <img src="nokiastart_6eep9zcd.gif" style="width: 100%;" alt="">
+          </div>
+
+          <div class="status-bar">
+            <span id="carrierName">Nokia</span>
+            <span id="statusTime">12:00</span>
+            <span id="ccsaaa">▐▐▐▐ 🔋</span>
+          </div>
+          <div class="screen-content" id="screenContent"></div>
+          <div class="softkey-bar">
+            <span id="leftSoft">القائمة</span>
+            <span style="font-size:7px;" id="centerSoft"></span>
+            <span id="rightSoft">الاسم</span>
+          </div>
+          <div class="progress-hold" id="lockProgress"></div>
+        </div>
+      </div>
+
+      <div class="nokia-logo" id="nokiaLogo">NOKIA</div>
+
+      <div class="soft-keys">
+        <div class="soft-btn ccvvg" id="leftSoftBtn">□</div>
+        <div class="soft-btn" style="width:36px;" onclick="pressMenu()"><i class="ti ti-apps" style="font-size:12px;"></i></div>
+        <div class="soft-btn ccvvg" onclick="pressRight()">□</div>
+      </div>
+
+      <div class="d-pad">
+        <div class="d-btn empty"></div>
+        <div class="d-btn" onclick="pressLeft2()">▲</div>
+        <div class="d-btn empty"></div>
+        <div class="d-btn" onclick="pressUp()">◀</div>
+        <div class="d-btn center" onclick="pressOK()">OK</div>
+        <div class="d-btn" onclick="pressDown()">▶</div>
+        <div class="d-btn empty"></div>
+        <div class="d-btn" onclick="pressRight2()">▼</div>
+        <div class="d-btn empty"></div>
+      </div>
+
+      <div class="soft-keys" style="margin-bottom:6px;">
+        <div class="soft-btn call-btn" onclick="pressCall()"><i class="ti ti-phone" style="font-size:13px;"></i></div>
+        <div class="soft-btn end-btn" style="width:36px;" onclick="pressEnd()"><i class="ti ti-phone-off" style="font-size:12px;"></i></div>
+        <div class="soft-btn end-btn" onclick="pressBack()"><i class="ti ti-backspace" style="font-size:13px;"></i></div>
+      </div>
+
+      <div class="num-grid">
+        <div class="num-btn" onclick="pressNum('1')">1<span>⠀</span></div>
+        <div class="num-btn" onclick="pressNum('2')">2<span>ABC</span></div>
+        <div class="num-btn" onclick="pressNum('3')">3<span>DEF</span></div>
+        <div class="num-btn" onclick="pressNum('4')">4<span>GHI</span></div>
+        <div class="num-btn" onclick="pressNum('5')">5<span>JKL</span></div>
+        <div class="num-btn" onclick="pressNum('6')">6<span>MNO</span></div>
+        <div class="num-btn" onclick="pressNum('7')">7<span>PQRS</span></div>
+        <div class="num-btn" onclick="pressNum('8')">8<span>TUV</span></div>
+        <div class="num-btn" onclick="pressNum('9')">9<span>WXYZ</span></div>
+        <div class="num-btn" onclick="pressNum('*')">*<span>+</span></div>
+        <div class="num-btn" onclick="pressNum('0')">0<span>⎵</span></div>
+        <div class="num-btn" onclick="pressNum('#')">#<span></span></div>
+      </div>
+
+      <div style="display:flex;justify-content:center;margin-top:8px;gap:8px;">
+        <div style="width:4px;height:16px;background:#263238;border-radius:2px;cursor:pointer;" title="Volume +/-"></div>
+        <div style="width:4px;height:16px;background:#263238;border-radius:2px;cursor:pointer;" title="Camera"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ i18n ============ */
+const i18n = {
+  ar: {
+    dir: 'rtl', name: 'العربية',
+    appNames: {
+      messages:'الرسائل', contacts:'جهات الاتصال', calls:'سجل المكالمات', clock:'الساعة', alarm:'المنبه',
+      stopwatch:'ساعة الإيقاف', timer:'المؤقت', calendar:'التقويم', calculator:'الآلة الحاسبة', notes:'الملاحظات',
+      files:'الملفات', gallery:'المعرض', media:'الوسائط', music:'الموسيقى', radio:'الراديو', camera:'الكاميرا',
+      games:'الألعاب', internet:'الإنترنت', apps_store:'التطبيقات', bluetooth:'البلوتوث',
+      received_files:'الملفات المستلمة', data_mgmt:'إدارة البيانات', profiles:'الأوضاع', themes:'الثيمات',
+      app_manager:'مدير التطبيقات', security:'الحماية', network:'الشبكة', homescreen:'الشاشة الرئيسية',
+      ringtones:'النغمات', wallpapers:'الخلفيات', settings:'الإعدادات', language:'اللغة'
+    },
+    cats: { comm:'تواصل', tools:'أدوات', files:'ملفات', fun:'ترفيه', net:'إنترنت', conn:'اتصالية', set:'إعدادات' },
+    menuKey:'القائمة', nameKey:'الاسم', backKey:'رجوع', openKey:'فتح', newKey:'جديد', callKey:'اتصال',
+    clearKey:'مسح', dialKey:'اتصال', sendKey:'إرسال', applyKey:'تطبيق', activateKey:'تفعيل',
+    days: ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],
+    daysShort: ['أح','اث','ثل','أر','خم','جم','سب'],
+    months: ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
+    lockHint: 'اضغط مطولاً على □ للفتح',
+    controlsTitle: 'مفاتيح التحكم',
+    controlsBody: ['⬆⬇ للتنقل داخل الصفحة','⬅➡ فتح القائمة / رجوع','✅ اختيار / فتح','📞 اتصال','🔴 رجوع / إنهاء','اضغط مطولاً على □ لقفل الشاشة'],
+    homeMsg: 'رسالة', homeMissed: 'مفقودة', homeNetwork: 'شبكة',
+    searchPlaceholder: 'بحث في جهات الاتصال...',
+    composeTo: 'إلى:', composePlaceholder: 'اكتب رسالتك (T9)...', noResults: 'لا توجد نتائج',
+    sentMsg: 'تم الإرسال إلى', t9On: 'T9: تنبؤي', t9Off: 'T9: متعدد النقر',
+    incoming: 'وارد', outgoing: 'صادر', missed: 'فائتة', themeApplied: 'تم تطبيق الثيم',
+    wallpaperApplied: 'تم تطبيق الخلفية', ringtoneSet: 'تم ضبط النغمة', langChanged: 'تم تغيير اللغة',
+  },
+  en: {
+    dir: 'ltr', name: 'English',
+    appNames: {
+      messages:'Messages', contacts:'Contacts', calls:'Call Log', clock:'Clock', alarm:'Alarm',
+      stopwatch:'Stopwatch', timer:'Timer', calendar:'Calendar', calculator:'Calculator', notes:'Notes',
+      files:'Files', gallery:'Gallery', media:'Media', music:'Music', radio:'Radio', camera:'Camera',
+      games:'Games', internet:'Internet', apps_store:'App Store', bluetooth:'Bluetooth',
+      received_files:'Received Files', data_mgmt:'Data Manager', profiles:'Profiles', themes:'Themes',
+      app_manager:'App Manager', security:'Security', network:'Network', homescreen:'Home Screen',
+      ringtones:'Ringtones', wallpapers:'Wallpapers', settings:'Settings', language:'Language'
+    },
+    cats: { comm:'Communication', tools:'Tools', files:'Files', fun:'Entertainment', net:'Internet', conn:'Connectivity', set:'Settings' },
+    menuKey:'Menu', nameKey:'Name', backKey:'Back', openKey:'Open', newKey:'New', callKey:'Call',
+    clearKey:'Clear', dialKey:'Call', sendKey:'Send', applyKey:'Apply', activateKey:'Activate',
+    days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+    daysShort: ['Su','Mo','Tu','We','Th','Fr','Sa'],
+    months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    lockHint: 'Hold □ to unlock',
+    controlsTitle: 'Controls',
+    controlsBody: ['⬆⬇ Navigate within page','⬅➡ Open menu / back','✅ Select / open','📞 Call','🔴 Back / end','Hold □ to lock screen'],
+    homeMsg: 'message', homeMissed: 'missed', homeNetwork: 'network',
+    searchPlaceholder: 'Search contacts...',
+    composeTo: 'To:', composePlaceholder: 'Type your message (T9)...', noResults: 'No results',
+    sentMsg: 'Sent to', t9On: 'T9: Predictive', t9Off: 'T9: Multi-tap',
+    incoming: 'Incoming', outgoing: 'Outgoing', missed: 'Missed', themeApplied: 'Theme applied',
+    wallpaperApplied: 'Wallpaper applied', ringtoneSet: 'Ringtone set', langChanged: 'Language changed',
+  }
+};
+function t(key) { return i18n[state.lang][key]; }
+function tApp(id) { return i18n[state.lang].appNames[id] || id; }
+
+/* ============ THEMES (Nokia 1100 / 3310 / N95 + originals) ============ */
+const themeDefs = {
+  classic: {
+    name: { ar:'الكلاسيكي', en:'Classic' },
+    swatches: ['#1a237e','#c8e6c9','#2e7d32'],
+    vars: { '--theme-bg-top':'#ffffff', '--theme-bg-bot':'#fdfdfd', '--screen-bg':'#c8e6c9', '--screen-text':'#1b5e20',
+      '--screen-text-dim':'#388e3c', '--screen-accent':'#2e7d32', '--screen-accent2':'#4caf50',
+      '--btn-grad-1':'#37474f', '--btn-grad-2':'#263238', '--btn-border':'#1c313a', '--btn-text':'#cfd8dc' }
+  },
+  ocean: {
+    name: { ar:'المحيط', en:'Ocean' },
+    swatches: ['#006064','#e0f7fa','#00acc1'],
+    vars: { '--theme-bg-top':'#e0f7fa', '--theme-bg-bot':'#b2ebf2', '--screen-bg':'#e0f7fa', '--screen-text':'#006064',
+      '--screen-text-dim':'#00838f', '--screen-accent':'#00838f', '--screen-accent2':'#00acc1',
+      '--btn-grad-1':'#37474f', '--btn-grad-2':'#263238', '--btn-border':'#1c313a', '--btn-text':'#cfd8dc' }
+  },
+  sunset: {
+    name: { ar:'الغروب', en:'Sunset' },
+    swatches: ['#bf360c','#fff8e1','#ef6c00'],
+    vars: { '--theme-bg-top':'#fff3e0', '--theme-bg-bot':'#ffe0b2', '--screen-bg':'#fff8e1', '--screen-text':'#bf360c',
+      '--screen-text-dim':'#e65100', '--screen-accent':'#e65100', '--screen-accent2':'#ef6c00',
+      '--btn-grad-1':'#5d4037', '--btn-grad-2':'#3e2723', '--btn-border':'#2a1a17', '--btn-text':'#ffccbc' }
+  },
+  night: {
+    name: { ar:'الليلي', en:'Night' },
+    swatches: ['#212121','#424242','#757575'],
+    vars: { '--theme-bg-top':'#37474f', '--theme-bg-bot':'#263238', '--screen-bg':'#1a1a1a', '--screen-text':'#90a4ae',
+      '--screen-text-dim':'#607d8b', '--screen-accent':'#455a64', '--screen-accent2':'#78909c',
+      '--btn-grad-1':'#263238', '--btn-grad-2':'#102027', '--btn-border':'#000', '--btn-text':'#90a4ae' }
+  },
+  rose: {
+    name: { ar:'الوردي', en:'Rose' },
+    swatches: ['#880e4f','#fce4ec','#c2185b'],
+    vars: { '--theme-bg-top':'#fce4ec', '--theme-bg-bot':'#f8bbd0', '--screen-bg':'#fce4ec', '--screen-text':'#880e4f',
+      '--screen-text-dim':'#ad1457', '--screen-accent':'#ad1457', '--screen-accent2':'#c2185b',
+      '--btn-grad-1':'#4a148c', '--btn-grad-2':'#311b92', '--btn-border':'#1a0a4a', '--btn-text':'#e1bee7' }
+  },
+  n1100: {
+    name: { ar:'Nokia 1100', en:'Nokia 1100' },
+    swatches: ['#6b7a5e','#cdd9b5','#3d4a32'],
+    vars: { '--theme-bg-top':'#9aa583', '--theme-bg-bot':'#7d8a68', '--screen-bg':'#cdd9b5', '--screen-text':'#2b3424',
+      '--screen-text-dim':'#3d4a32', '--screen-accent':'#3d4a32', '--screen-accent2':'#5a6b48',
+      '--btn-grad-1':'#5c6b4f', '--btn-grad-2':'#3d4a32', '--btn-border':'#262e1c', '--btn-text':'#dde5cc' }
+  },
+  n3310: {
+    name: { ar:'Nokia 3310', en:'Nokia 3310' },
+    swatches: ['#3a4a3a','#a9c69c','#1f2e1f'],
+    vars: { '--theme-bg-top':'#1f2e1f', '--theme-bg-bot':'#13201a', '--screen-bg':'#a9c69c', '--screen-text':'#16240f',
+      '--screen-text-dim':'#26401a', '--screen-accent':'#26401a', '--screen-accent2':'#3a5c28',
+      '--btn-grad-1':'#2a3a2a', '--btn-grad-2':'#16221a', '--btn-border':'#0a120a', '--btn-text':'#c8d8c0' }
+  },
+  n95: {
+    name: { ar:'Nokia N95', en:'Nokia N95' },
+    swatches: ['#1c1c1c','#0a0a0a','#c0c0c0'],
+    vars: { '--theme-bg-top':'#2b2b2b', '--theme-bg-bot':'#101010', '--screen-bg':'#0c0c12', '--screen-text':'#d8d8e0',
+      '--screen-text-dim':'#9090a0', '--screen-accent':'#2c2c38', '--screen-accent2':'#5c8cff',
+      '--btn-grad-1':'#3a3a3a', '--btn-grad-2':'#101010', '--btn-border':'#000', '--btn-text':'#e0e0e0' }
+  },
+};
+
+/* ============ WALLPAPERS ============ */
+const wallpaperDefs = ['#1a237e','#004d40','#4a148c','#bf360c','#1b5e20','#0d47a1','#3d4a32','#1c1c1c'];
+
+/* ============ AUDIO ENGINE (Web Audio API - synthesized Nokia tones) ============ */
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, startTime, duration, gainVal=0.15, type='square') {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainVal, startTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+
+/* Nokia tune notes (simplified Grande Valse melody) as [freq, duration] pairs */
+const NOKIA_TUNE = [
+  [659,0.125],[622,0.125],[440,0.25],[494,0.25],
+  [370,0.125],[415,0.125],[294,0.25],[330,0.25],
+  [247,0.125],[277,0.125],[220,0.25],[294,0.125],[247,0.125],
+  [220,0.5]
+];
+
+function playNokiaTune() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  let t = ctx.currentTime + 0.02;
+  NOKIA_TUNE.forEach(([freq,dur]) => {
+    playTone(freq, t, dur*0.9, 0.12, 'sine');
+    t += dur;
+  });
+}
+
+/* Key press click - short percussive blip */
+function playKeyClick() {
+  if (!state.soundOn) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  playTone(1800, ctx.currentTime, 0.03, 0.05, 'square');
+}
+
+/* SMS notification - two-tone */
+function playSmsTone() {
+  if (!state.soundOn) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  playTone(1318, t, 0.1, 0.13, 'sine');
+  playTone(1568, t+0.12, 0.15, 0.13, 'sine');
+}
+
+/* Lock/unlock blip */
+function playLockTone(locking) {
+  if (!state.soundOn) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  if (locking) { playTone(880, t, 0.08, 0.1, 'triangle'); playTone(440, t+0.08, 0.1, 0.1, 'triangle'); }
+  else { playTone(440, t, 0.08, 0.1, 'triangle'); playTone(880, t+0.08, 0.12, 0.1, 'triangle'); }
+}
+
+/* Full ringtone for incoming call sim / power on */
+function playRingtone() {
+  if (!state.soundOn) return;
+  playNokiaTune();
+}
+
+/* ============ VIBRATION ============ */
+function vibrate(pattern) {
+  if (!state.vibrationOn) return;
+  if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch(e) {} }
+  // Visual fallback shake for devices/browsers without vibration support
+  const body = document.getElementById('phoneBody');
+  if (body) {
+    body.classList.remove('shake');
+    void body.offsetWidth;
+    body.classList.add('shake');
+  }
+}
+function buttonFeedback() {
+  vibrate(10);
+  playKeyClick();
+}
+
+/* ============ T9 PREDICTIVE TEXT ============ */
+const T9_MAP = {
+  '2':'abc', '3':'def', '4':'ghi', '5':'jkl', '6':'mno', '7':'pqrs', '8':'tuv', '9':'wxyz',
+  '1':'.,?!1', '0':' 0'
+};
+/* Small built-in dictionaries keyed by numeric signature, EN + simple AR transliteration-free common words */
+const T9_DICT_EN = ['the','to','you','and','is','in','it','of','for','on','that','this','are','with','have',
+  'be','at','not','your','can','will','call','me','my','hi','hello','how','ok','yes','no','good','love',
+  'see','later','now','today','where','when','what','why','who','please','thanks','thank','bye','home',
+  'work','time','day','night','meeting','call','text','message','free','busy','sorry','great','nice'];
+
+function wordSignature(word) {
+  let sig = '';
+  for (const ch of word.toLowerCase()) {
+    let found = '0';
+    for (const [digit, letters] of Object.entries(T9_MAP)) {
+      if (letters.includes(ch)) { found = digit; break; }
+    }
+    sig += found;
+  }
+  return sig;
+}
+const T9_INDEX = {};
+T9_DICT_EN.forEach(w => {
+  const sig = wordSignature(w);
+  if (!T9_INDEX[sig]) T9_INDEX[sig] = [];
+  T9_INDEX[sig].push(w);
+});
+
+function t9Suggestions(digits) {
+  if (!digits) return [];
+  return T9_INDEX[digits] || [];
+}
+
+/* Multi-tap fallback: cycles through letters of a key on repeated same-key presses within timeout */
+let multiTapState = { key: null, index: 0, timer: null };
+function multiTapChar(digit) {
+  const letters = (T9_MAP[digit] || '').split('');
+  if (!letters.length) return digit;
+  if (multiTapState.key === digit) {
+    multiTapState.index = (multiTapState.index + 1) % letters.length;
+  } else {
+    multiTapState.key = digit;
+    multiTapState.index = 0;
+  }
+  clearTimeout(multiTapState.timer);
+  multiTapState.timer = setTimeout(() => { multiTapState.key = null; }, 900);
+  return letters[multiTapState.index];
+}
+
+/* ============ APPS DEFINITION ============ */
+const apps = [
+  { id:'messages', icon:'ti-message', cat:'comm' },
+  { id:'contacts', icon:'ti-address-book', cat:'comm' },
+  { id:'calls', icon:'ti-phone', cat:'comm' },
+  { id:'clock', icon:'ti-clock', cat:'tools' },
+  { id:'alarm', icon:'ti-alarm', cat:'tools' },
+  { id:'stopwatch', icon:'ti-player-stop', cat:'tools' },
+  { id:'timer', icon:'ti-hourglass', cat:'tools' },
+  { id:'calendar', icon:'ti-calendar', cat:'tools' },
+  { id:'calculator', icon:'ti-calculator', cat:'tools' },
+  { id:'notes', icon:'ti-notes', cat:'tools' },
+  { id:'files', icon:'ti-folder', cat:'files' },
+  { id:'gallery', icon:'ti-photo', cat:'files' },
+  { id:'media', icon:'ti-movie', cat:'files' },
+  { id:'music', icon:'ti-music', cat:'fun' },
+  { id:'radio', icon:'ti-radio', cat:'fun' },
+  { id:'camera', icon:'ti-camera', cat:'fun' },
+  { id:'games', icon:'ti-device-gamepad', cat:'fun' },
+  { id:'internet', icon:'ti-world', cat:'net' },
+  { id:'apps_store', icon:'ti-apps', cat:'net' },
+  { id:'bluetooth', icon:'ti-bluetooth', cat:'conn' },
+  { id:'received_files', icon:'ti-download', cat:'conn' },
+  { id:'data_mgmt', icon:'ti-database', cat:'set' },
+  { id:'profiles', icon:'ti-user-circle', cat:'set' },
+  { id:'themes', icon:'ti-palette', cat:'set' },
+  { id:'app_manager', icon:'ti-puzzle', cat:'set' },
+  { id:'security', icon:'ti-shield', cat:'set' },
+  { id:'network', icon:'ti-wifi', cat:'set' },
+  { id:'homescreen', icon:'ti-layout', cat:'set' },
+  { id:'ringtones', icon:'ti-volume', cat:'set' },
+  { id:'wallpapers', icon:'ti-photo', cat:'set' },
+  { id:'language', icon:'ti-language', cat:'set' },
+  { id:'settings', icon:'ti-settings', cat:'set' },
+];
+
+/* ============ STATE ============ */
+let state = {
+  lang: 'ar',
+  screen: 'home',
+  menuSel: 0,
+  subSel: 0,
+  locked: true,
+  booting: false,
+  soundOn: true,
+  vibrationOn: true,
+  currentTheme: 'classic',
+  currentWallpaper: 0,
+  calcExpr: '', calcDisp: '0', calcNew: true,
+  swRunning: false, swTime: 0, swInterval: null,
+  timerSecs: 0, timerRunning: false, timerInterval: null,
+  alarms: [
+    { time: '06:30', on: true, label: 'الاستيقاظ' },
+    { time: '08:00', on: false, label: 'العمل' },
+    { time: '12:30', on: true, label: 'الغداء' },
+  ],
+  notes: ['تذكير: اشتري حليب\nوخبز من السوق', 'قائمة المهام:\n- الاجتماع 2م\n- مكالمة أحمد'],
+  contacts: [
+    { name: 'أحمد محمد', num: '0501234567', init: 'أح' },
+    { name: 'سارة علي', num: '0559876543', init: 'سع' },
+    { name: 'محمد خالد', num: '0531122334', init: 'مخ' },
+    { name: 'فاطمة حسن', num: '0544556677', init: 'فح' },
+    { name: 'عمر يوسف', num: '0507788990', init: 'عي' },
+  ],
+  contactSearch: '',
+  messages: [
+    { from: 'أحمد محمد', text: 'كيف حالك؟', time: '10:30', out: false },
+    { from: 'أنا', text: 'بخير الحمد لله', time: '10:31', out: true },
+    { from: 'سارة علي', text: 'موعدنا الساعة 3', time: '11:00', out: false },
+    { from: 'أنا', text: 'حسناً سأكون هناك', time: '11:05', out: true },
+  ],
+  composeTarget: null,
+  composeText: '',
+  t9Mode: true,
+  calls: [
+    { name: 'أحمد محمد', time: '10:30', type: 'in', dur: '5د' },
+    { name: 'سارة علي', time: 'أمس', type: 'miss', dur: '' },
+    { name: 'محمد خالد', time: 'أمس', type: 'out', dur: '12د' },
+    { name: 'رقم غير معروف', time: 'الأثنين', type: 'miss', dur: '' },
+    { name: 'عمر يوسف', time: 'الأحد', type: 'out', dur: '3د' },
+  ],
+  radioFreq: 97.5,
+  radioPlaying: false,
+  songs: ['نشيد الوطن', 'لحن الأمل', 'صوت الحرية', 'موسيقى الصباح', 'أغنية السلام'],
+  currentSong: 0,
+  musicPlaying: false,
+  dialer: '',
+  btDevices: [
+    { name: 'JBL Speaker', type: 'سماعة', paired: true },
+    { name: 'iPhone 13', type: 'هاتف', paired: false },
+    { name: 'Samsung TV', type: 'تلفاز', paired: false },
+  ],
+  receivedFiles: [
+    { name: 'صورة001.jpg', size: '245KB', type: 'image' },
+    { name: 'وثيقة.pdf', size: '1.2MB', type: 'doc' },
+    { name: 'نغمة.mp3', size: '3.4MB', type: 'music' },
+  ],
+  selectedRingtone: 0,
+  navHistory: [],
+  toast: null,
+  toastTimer: null,
+  longPressTimer: null,
+  longPressProgress: 0,
+};
+
+function getTime() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+function getDate() {
+  const d = new Date();
+  const days = i18n[state.lang].days;
+  return days[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+}
+function showToast(msg) {
+  state.toast = msg;
+  clearTimeout(state.toastTimer);
+  renderScreen();
+  state.toastTimer = setTimeout(() => { state.toast = null; renderScreen(); }, 1600);
+}
+
+/* ============ THEME SYSTEM ============ */
+function applyTheme(themeId) {
+  const theme = themeDefs[themeId];
+  if (!theme) return;
+  state.currentTheme = themeId;
+  const root = document.documentElement;
+  Object.entries(theme.vars).forEach(([k,v]) => root.style.setProperty(k, v));
+}
+
+/* ============ WALLPAPER ============ */
+function applyWallpaper(idx) {
+  state.currentWallpaper = idx;
+  showToast(t('wallpaperApplied'));
+}
+
+/* ============ LOCK SCREEN ============ */
+function updateLockClock() {
+  const lc = document.getElementById('lockClock');
+  const ld = document.getElementById('lockDate');
+  if (lc) lc.textContent = getTime();
+  if (ld) ld.textContent = getDate();
+  const hint = document.querySelector('.lock-hint');
+  if (hint) hint.textContent = t('lockHint');
+}
+
+function lockPhone() {
+  state.locked = true;
+  const ls = document.getElementById('lockScreen');
+  if (ls) ls.classList.remove('hidden');
+  updateLockClock();
+  playLockTone(true);
+  vibrate(15);
+}
+
+function unlockPhone() {
+  state.locked = false;
+  const ls = document.getElementById('lockScreen');
+  if (ls) ls.classList.add('hidden');
+  playLockTone(false);
+  vibrate([10,30,10]);
+  state.screen = 'home';
+  renderScreen();
+  updateSidebar();
+}
+
+function startBootSequence() {
+  state.booting = true;
+  const boot = document.getElementById('bootScreen');
+  if (boot) boot.classList.add('active');
+  playRingtone();
+  vibrate([20,40,20,40,20]);
+  setTimeout(() => {
+    if (boot) boot.classList.remove('active');
+    state.booting = false;
+    unlockPhone();
+  }, 2000);
+}
+
+/* ============ LEFT SOFT KEY (□): long-press (1s) to lock/unlock, short tap = normal soft-key action ============ */
+function setupLongPress() {
+  const btn = document.getElementById('leftSoftBtn');
+  const progressBar = document.getElementById('lockProgress');
+  if (!btn) return;
+
+  let pressStart = null;
+  let raf = null;
+  let triggeredLongPress = false;
+
+  function tick() {
+    if (pressStart === null) return;
+    const elapsed = performance.now() - pressStart;
+    const pct = Math.min(100, (elapsed / 1000) * 100);
+    if (progressBar) progressBar.style.width = pct + '%';
+    if (elapsed >= 1000) {
+      pressStart = null;
+      triggeredLongPress = true;
+      if (progressBar) progressBar.style.width = '0%';
+      if (state.locked && !state.booting) {
+        startBootSequence();
+      } else if (!state.locked) {
+        lockPhone();
+      }
+      return;
+    }
+    raf = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    if (state.booting) return;
+    triggeredLongPress = false;
+    pressStart = performance.now();
+    raf = requestAnimationFrame(tick);
+  }
+
+  function cancelPress() {
+    pressStart = null;
+    if (raf) cancelAnimationFrame(raf);
+    if (progressBar) progressBar.style.width = '0%';
+  }
+
+  function release() {
+    const wasLong = triggeredLongPress;
+    cancelPress();
+    if (!wasLong && !state.locked && !state.booting) {
+      pressLeft();
+    }
+  }
+
+  btn.addEventListener('mousedown', start);
+  btn.addEventListener('touchstart', start, { passive: true });
+  btn.addEventListener('mouseup', release);
+  btn.addEventListener('mouseleave', cancelPress);
+  btn.addEventListener('touchend', release);
+  btn.addEventListener('touchcancel', cancelPress);
+}
+
+/* ============ RENDER CORE ============ */
+/* FIX: previously the whole screen re-rendered every second via setInterval(renderScreen,1000),
+   destroying focus/scroll state and any in-progress typing. Now we separate:
+   - a lightweight "tick" that only updates clock/time text nodes every second
+   - a full renderScreen() that runs only on actual navigation/state changes */
+
+function setSoftKeys(l, c, r) {
+  document.getElementById('leftSoft').textContent = l;
+  document.getElementById('centerSoft').textContent = c;
+  document.getElementById('rightSoft').textContent = r;
+}
+
+function tickClock() {
+  const st = document.getElementById('statusTime');
+  if (st) st.textContent = getTime();
+  if (state.locked) { updateLockClock(); return; }
+  // live-update only screens that show a running clock face, without full re-render
+  if (state.screen === 'clock') { renderClock(document.getElementById('screenContent')); }
+  else if (state.screen === 'home') {
+    const hd = document.querySelector('.home-time');
+    if (hd) hd.textContent = getTime();
+  }
+}
+
+function renderScreen() {
+  if (state.locked) return;
+  const el = document.getElementById('screenContent');
+  if (!el) return;
+  document.getElementById('statusTime').textContent = getTime();
+
+  if (state.toast) {
+    el.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;">
+      <div style="background:rgba(0,0,0,0.75);color:#a5d6a7;font-size:9px;padding:6px 10px;border-radius:4px;max-width:90%;text-align:center;">${state.toast}</div>
+    </div>` + el.innerHTML;
+  }
+
+  switch(state.screen) {
+    case 'home': renderHome(el); break;
+    case 'menu': renderMenu(el); break;
+    case 'messages': renderMessages(el); break;
+    case 'compose': renderCompose(el); break;
+    case 'contacts': renderContacts(el); break;
+    case 'calls': renderCallLog(el); break;
+    case 'clock': renderClock(el); break;
+    case 'alarm': renderAlarm(el); break;
+    case 'stopwatch': renderStopwatch(el); break;
+    case 'timer': renderTimer(el); break;
+    case 'calendar': renderCalendar(el); break;
+    case 'calculator': renderCalculator(el); break;
+    case 'notes': renderNotes(el); break;
+    case 'files': renderFiles(el); break;
+    case 'gallery': renderGallery(el); break;
+    case 'media': renderMedia(el); break;
+    case 'music': renderMusic(el); break;
+    case 'radio': renderRadio(el); break;
+    case 'camera': renderCamera(el); break;
+    case 'games': renderGames(el); break;
+    case 'internet': renderInternet(el); break;
+    case 'apps_store': renderAppsStore(el); break;
+    case 'bluetooth': renderBluetooth(el); break;
+    case 'received_files': renderReceivedFiles(el); break;
+    case 'data_mgmt': renderDataMgmt(el); break;
+    case 'profiles': renderProfiles(el); break;
+    case 'themes': renderThemes(el); break;
+    case 'app_manager': renderAppManager(el); break;
+    case 'security': renderSecurity(el); break;
+    case 'network': renderNetwork(el); break;
+    case 'homescreen': renderHomescreenSettings(el); break;
+    case 'ringtones': renderRingtones(el); break;
+    case 'wallpapers': renderWallpapers(el); break;
+    case 'language': renderLanguage(el); break;
+    case 'settings': renderSettings(el); break;
+    case 'dialer': renderDialer(el); break;
+    default: renderHome(el);
+  }
+  document.getElementById('mainScreen').dir = i18n[state.lang].dir;
+}
+
+/* ============ PAGE RENDERERS: Home / Menu ============ */
+function renderHome(el) {
+  setSoftKeys(t('menuKey'), '', t('nameKey'));
+  const wp = wallpaperDefs[state.currentWallpaper];
+  const unread = state.messages.filter(m=>!m.out && m.unread).length;
+  const missed = state.calls.filter(c=>c.type==='miss').length;
+  el.innerHTML = `
+    <div style="position:absolute;inset:0;background:${wp};opacity:0.08;pointer-events:none;"></div>
+    <div class="home-time">${getTime()}</div>
+    <div class="home-date">${getDate()}</div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:2px;">
+      <div style="font-size:8px;color:var(--screen-accent2);text-align:center;">
+        <i class="ti ti-message" style="font-size:12px;display:block;"></i>${unread} ${t('homeMsg')}
+      </div>
+      <div style="font-size:8px;color:var(--screen-accent2);text-align:center;">
+        <i class="ti ti-phone-missed" style="font-size:12px;display:block;"></i>${missed} ${t('homeMissed')}
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:4px;">
+      <div style="font-size:8px;color:var(--screen-accent);background:rgba(46,125,50,0.1);border-radius:3px;padding:2px 4px;display:inline-block;">📶📶📶📶 ${t('homeNetwork')}: Nokia</div>
+    </div>
+  `;
+}
+
+function renderMenu(el) {
+  setSoftKeys(t('openKey'), '', t('backKey'));
+  const cats = [...new Set(apps.map(a => a.cat))];
+  let html = '';
+  cats.forEach(cat => {
+    const catApps = apps.filter(a => a.cat === cat);
+    html += `<div style="font-size:8px;color:var(--screen-accent2);padding:2px 2px 1px;margin-top:2px;">${i18n[state.lang].cats[cat]}</div>`;
+    html += `<div class="menu-grid" style="grid-template-columns:repeat(4,1fr);">`;
+    catApps.forEach((app) => {
+      const globalIdx = apps.indexOf(app);
+      const sel = globalIdx === state.menuSel ? 'selected' : '';
+      html += `<div class="menu-item ${sel}" onclick="openApp('${app.id}')">
+        <i class="ti ${app.icon}" aria-hidden="true"></i>
+        <span style="font-size:6px;">${tApp(app.id)}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  el.innerHTML = `<div style="overflow:hidden;height:100%;">${html}</div>`;
+  setTimeout(() => {
+    const sel = el.querySelector('.selected');
+    if(sel) sel.scrollIntoView({block:'nearest'});
+  }, 0);
+}
+
+/* ============ MESSAGES (with send + dynamic) ============ */
+function renderMessages(el) {
+  setSoftKeys(t('newKey'), '', t('backKey'));
+  if (!state.messages.length) {
+    el.innerHTML = `<div class="app-header"><i class="ti ti-message"></i> ${tApp('messages')}</div>
+      <div class="app-body" style="display:flex;align-items:center;justify-content:center;color:var(--screen-accent2);font-size:9px;">${t('noResults')}</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="app-header"><i class="ti ti-message"></i> ${tApp('messages')}</div>
+    <div class="app-body">
+      ${state.messages.map((m,i)=>`
+        <div class="msg-bubble ${m.out?'msg-out':'msg-in'} ${state.screen==='messages'&&i===state.subSel?'kbd-selected':''}" style="display:block;">
+          ${!m.out?`<div style="font-size:7px;color:var(--screen-accent);font-weight:bold;">${m.from}</div>`:''}
+          ${escapeHtml(m.text)}
+          <div class="msg-time">${m.time}</div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function renderCompose(el) {
+  setSoftKeys(t('sendKey'), '', t('backKey'));
+  const target = state.composeTarget;
+  const targetName = target ? target.name : '?';
+  el.innerHTML = `<div class="app-header"><i class="ti ti-edit"></i> ${tApp('messages')}</div>
+    <div class="app-body">
+      <div style="font-size:8px;color:var(--screen-accent);margin-bottom:2px;">${t('composeTo')} ${targetName}</div>
+      <div class="compose-box">${escapeHtml(state.composeText) || `<span style="opacity:0.5;">${t('composePlaceholder')}</span>`}<span style="animation:lockPulse 1s infinite;">|</span></div>
+      <div class="t9-bar">
+        <span>${state.t9Mode ? t('t9On') : t('t9Off')}</span>
+        <span style="cursor:pointer;text-decoration:underline;" onclick="toggleT9()">#</span>
+      </div>
+      <div style="font-size:7px;color:var(--screen-accent2);">اضغط أرقام الهاتف للكتابة، OK للإرسال</div>
+    </div>`;
+}
+
+function toggleT9() {
+  state.t9Mode = !state.t9Mode;
+  buttonFeedback();
+  renderScreen();
+}
+
+function startCompose(contact) {
+  state.composeTarget = contact;
+  state.composeText = '';
+  state.screen = 'compose';
+  renderScreen();
+}
+
+function sendComposed() {
+  if (!state.composeText.trim() || !state.composeTarget) { pressBack(); return; }
+  state.messages.push({ from: 'أنا', text: state.composeText.trim(), time: getTime(), out: true });
+  showToast(t('sentMsg') + ' ' + state.composeTarget.name);
+  vibrate(20);
+  playSmsTone();
+  state.composeText = '';
+  state.screen = 'messages';
+  renderScreen();
+}
+
+function composeTypeDigit(digit) {
+  if (digit === '0') { state.composeText += ' '; renderScreen(); return; }
+  if (state.t9Mode && T9_MAP[digit] && /[2-9]/.test(digit)) {
+    // simple predictive: append digit to a pending word buffer tracked via last space
+    const parts = state.composeText.split(' ');
+    let lastWord = parts[parts.length-1] || '';
+    // track raw digits for current word in a side buffer
+    state._t9buf = (state._t9buf||'') + digit;
+    const suggestions = t9Suggestions(state._t9buf);
+    const word = suggestions.length ? suggestions[0] : state._t9buf;
+    parts[parts.length-1] = word;
+    state.composeText = parts.join(' ');
+  } else {
+    const ch = multiTapChar(digit);
+    state.composeText += ch;
+    state._t9buf = '';
+  }
+  renderScreen();
+}
+function composeBackspace() {
+  state.composeText = state.composeText.slice(0,-1);
+  state._t9buf = '';
+  renderScreen();
+}
+function composeSpace() {
+  state.composeText += ' ';
+  state._t9buf = '';
+  renderScreen();
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ============ CONTACTS (with search) ============ */
+function renderContacts(el) {
+  setSoftKeys(t('newKey'), '', t('backKey'));
+  const q = (state.contactSearch||'').trim().toLowerCase();
+  const filtered = state.contacts.filter(c => !q || c.name.toLowerCase().includes(q) || c.num.includes(q));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-address-book"></i> ${tApp('contacts')}</div>
+    <div class="app-body">
+      <input class="contact-search" id="contactSearchInput" placeholder="${t('searchPlaceholder')}" value="${escapeHtml(state.contactSearch||'')}" oninput="state.contactSearch=this.value;renderContactsListOnly();" />
+      <div id="contactsListWrap">
+        ${filtered.length ? filtered.map((c,i)=>`
+          <div class="list-item ${state.screen==='contacts'&&i===state.subSel?'kbd-selected':''}" onclick="startCompose(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+            <div class="contact-avatar">${c.init}</div>
+            <div>
+              <div>${escapeHtml(c.name)}</div>
+              <div class="sub">${c.num}</div>
+            </div>
+            <i class="ti ti-message" style="margin-left:auto;font-size:11px;" title="مراسلة"></i>
+            <i class="ti ti-phone" style="font-size:11px;" onclick="event.stopPropagation();dialContact('${c.num}')"></i>
+          </div>
+        `).join('') : `<div style="text-align:center;color:var(--screen-accent2);font-size:9px;padding:10px;">${t('noResults')}</div>`}
+      </div>
+    </div>`;
+}
+function renderContactsListOnly() {
+  // keep focus in the search input by only refreshing the list portion
+  const wrap = document.getElementById('contactsListWrap');
+  if (!wrap) return;
+  const q = (state.contactSearch||'').trim().toLowerCase();
+  const filtered = state.contacts.filter(c => !q || c.name.toLowerCase().includes(q) || c.num.includes(q));
+  wrap.innerHTML = filtered.length ? filtered.map((c)=>`
+    <div class="list-item" onclick="startCompose(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+      <div class="contact-avatar">${c.init}</div>
+      <div><div>${escapeHtml(c.name)}</div><div class="sub">${c.num}</div></div>
+      <i class="ti ti-message" style="margin-left:auto;font-size:11px;"></i>
+      <i class="ti ti-phone" style="font-size:11px;" onclick="event.stopPropagation();dialContact('${c.num}')"></i>
+    </div>`).join('') : `<div style="text-align:center;color:var(--screen-accent2);font-size:9px;padding:10px;">${t('noResults')}</div>`;
+}
+function dialContact(num) {
+  state.dialer = num;
+  state.screen = 'dialer';
+  renderScreen();
+}
+
+/* ============ CALL LOG (dynamic) ============ */
+function renderCallLog(el) {
+  setSoftKeys(t('callKey'), '', t('backKey'));
+  const icons = { in:'ti-phone-incoming call-in', out:'ti-phone-outgoing call-out', miss:'ti-phone-missed call-miss' };
+  const labels = { in:t('incoming'), out:t('outgoing'), miss:t('missed') };
+  el.innerHTML = `<div class="app-header"><i class="ti ti-phone"></i> ${tApp('calls')}</div>
+    <div class="app-body">
+      ${state.calls.map((c,i)=>`
+        <div class="call-row ${state.screen==='calls'&&i===state.subSel?'kbd-selected':''}" onclick="dialContact('${(state.contacts.find(x=>x.name===c.name)||{}).num||''}')" title="${labels[c.type]}">
+          <i class="ti ${icons[c.type]} type"></i>
+          <div>
+            <div>${escapeHtml(c.name)}</div>
+            <div class="sub">${c.time} ${c.dur}</div>
+          </div>
+          <i class="ti ti-phone time" style="margin-left:auto;font-size:10px;"></i>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function simulateCall(name, num) {
+  const types = ['in','out','miss'];
+  const type = types[Math.floor(Math.random()*types.length)];
+  const dur = type==='miss' ? '' : Math.floor(Math.random()*15+1)+'د';
+  state.calls.unshift({ name, time: getTime(), type, dur });
+  if (state.calls.length > 20) state.calls.pop();
+}
+
+/* ============ DIALER ============ */
+function renderDialer(el) {
+  setSoftKeys(t('dialKey'), '', t('clearKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-phone"></i> ${t('dialKey')}</div>
+    <div class="app-body">
+      <div style="background:rgba(46,125,50,0.1);border-radius:4px;padding:6px;text-align:center;margin-bottom:6px;">
+        <div style="font-size:18px;font-weight:bold;color:var(--screen-text);min-height:26px;letter-spacing:2px;direction:ltr;">${state.dialer||'_'}</div>
+        <div style="font-size:8px;color:var(--screen-accent);">اكتب رقم الاتصال</div>
+      </div>
+      <div style="font-size:8px;color:var(--screen-accent2);text-align:center;">أو اختر من جهات الاتصال</div>
+    </div>`;
+}
+
+/* ============ CLOCK ============ */
+function renderClock(el) {
+  setSoftKeys(tApp('alarm'), '', t('backKey'));
+  const d = new Date();
+  const h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  const cx=55, cy=48, r=35;
+  const ha = (h%12+m/60)*30*Math.PI/180 - Math.PI/2;
+  const ma = (m+s/60)*6*Math.PI/180 - Math.PI/2;
+  const sa = s*6*Math.PI/180 - Math.PI/2;
+  const hx=cx+r*0.55*Math.cos(ha), hy=cy+r*0.55*Math.sin(ha);
+  const mx=cx+r*0.75*Math.cos(ma), my=cy+r*0.75*Math.sin(ma);
+  const sx=cx+r*0.85*Math.cos(sa), sy=cy+r*0.85*Math.sin(sa);
+  const ticks = Array.from({length:12},(_,i)=>{
+    const a=i*30*Math.PI/180-Math.PI/2;
+    const x1=cx+r*0.88*Math.cos(a), y1=cy+r*0.88*Math.sin(a);
+    const x2=cx+r*Math.cos(a), y2=cy+r*Math.sin(a);
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--screen-accent)" stroke-width="${i%3===0?1.5:0.8}"/>`;
+  }).join('');
+  el.innerHTML = `<div class="app-header"><i class="ti ti-clock"></i> ${tApp('clock')}</div>
+    <div class="app-body" style="display:flex;flex-direction:column;align-items:center;">
+      <svg width="110" height="96" style="margin-top:4px;">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(46,125,50,0.1)" stroke="var(--screen-accent)" stroke-width="1"/>
+        ${ticks}
+        <line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="var(--screen-text)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="${cx}" y1="${cy}" x2="${mx}" y2="${my}" stroke="var(--screen-accent)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="${cx}" y1="${cy}" x2="${sx}" y2="${sy}" stroke="#e53935" stroke-width="0.8" stroke-linecap="round"/>
+        <circle cx="${cx}" cy="${cy}" r="2" fill="var(--screen-text)"/>
+      </svg>
+      <div style="font-size:18px;font-weight:bold;color:var(--screen-text);line-height:1;">${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}</div>
+      <div style="font-size:8px;color:var(--screen-accent2);">${getDate()}</div>
+    </div>`;
+}
+
+/* ============ ALARM ============ */
+function renderAlarm(el) {
+  setSoftKeys(t('newKey'), '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-alarm"></i> ${tApp('alarm')}</div>
+    <div class="app-body">
+      ${state.alarms.map((a,i)=>`
+        <div class="alarm-item">
+          <div>
+            <div style="font-size:13px;font-weight:bold;">${a.time}</div>
+            <div style="font-size:8px;color:var(--screen-accent2);">${escapeHtml(a.label)}</div>
+          </div>
+          <div class="toggle-btn ${a.on?'':'off'}" onclick="toggleAlarm(${i})"></div>
+        </div>
+      `).join('')}
+      <div style="text-align:center;margin-top:6px;">
+        <div style="font-size:12px;color:var(--screen-accent2);cursor:pointer;border:1px dashed var(--screen-accent2);padding:3px;border-radius:3px;" onclick="addAlarm()">+ إضافة منبه</div>
+      </div>
+    </div>`;
+}
+function toggleAlarm(i) { state.alarms[i].on = !state.alarms[i].on; buttonFeedback(); renderScreen(); }
+function addAlarm() {
+  const hh = Math.floor(Math.random()*12+5).toString().padStart(2,'0');
+  const mm = ['00','15','30','45'][Math.floor(Math.random()*4)];
+  state.alarms.push({ time: `${hh}:${mm}`, on: true, label: state.lang==='ar'?'منبه جديد':'New alarm' });
+  buttonFeedback();
+  renderScreen();
+}
+
+/* ============ STOPWATCH ============ */
+function renderStopwatch(el) {
+  setSoftKeys(state.swRunning?'إيقاف':'بدء', '', t('backKey'));
+  const total = state.swTime;
+  const ms = (total % 100).toString().padStart(2,'0');
+  const secs = Math.floor(total/100) % 60;
+  const mins = Math.floor(total/6000) % 60;
+  const hrs = Math.floor(total/360000);
+  el.innerHTML = `<div class="app-header"><i class="ti ti-player-stop"></i> ${tApp('stopwatch')}</div>
+    <div class="app-body">
+      <div class="stopwatch-display">
+        <div class="sw-time">${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}</div>
+        <div class="sw-ms">.${ms}</div>
+      </div>
+      <div class="sw-btns">
+        <div class="sw-btn" onclick="swToggle()">${state.swRunning?'إيقاف':'بدء'}</div>
+        <div class="sw-btn" onclick="swReset()">إعادة</div>
+        <div class="sw-btn" onclick="swLap()">لابة</div>
+      </div>
+    </div>`;
+}
+function swToggle() {
+  buttonFeedback();
+  if(state.swRunning) { clearInterval(state.swInterval); state.swRunning = false; }
+  else {
+    state.swInterval = setInterval(()=>{ state.swTime++; if(state.screen==='stopwatch' && !state.locked) renderScreen(); }, 10);
+    state.swRunning = true;
+  }
+  renderScreen();
+}
+function swReset() { buttonFeedback(); clearInterval(state.swInterval); state.swRunning=false; state.swTime=0; renderScreen(); }
+function swLap() { buttonFeedback(); }
+
+/* ============ TIMER ============ */
+function renderTimer(el) {
+  setSoftKeys(state.timerRunning?'إيقاف':'بدء', '', t('backKey'));
+  const s = state.timerSecs % 60;
+  const m = Math.floor(state.timerSecs/60) % 60;
+  const h = Math.floor(state.timerSecs/3600);
+  el.innerHTML = `<div class="app-header"><i class="ti ti-hourglass"></i> ${tApp('timer')}</div>
+    <div class="app-body">
+      <div class="timer-display">
+        <div class="timer-big">${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}</div>
+      </div>
+      <div class="timer-controls">
+        <div class="timer-btn" onclick="setTimer(60)">1د</div>
+        <div class="timer-btn" onclick="setTimer(300)">5د</div>
+        <div class="timer-btn" onclick="setTimer(600)">10د</div>
+        <div class="timer-btn" onclick="setTimer(1800)">30د</div>
+        <div class="timer-btn" onclick="setTimer(3600)">ساعة</div>
+      </div>
+      <div class="sw-btns" style="margin-top:6px;">
+        <div class="sw-btn" onclick="timerToggle()">${state.timerRunning?'إيقاف':'بدء'}</div>
+        <div class="sw-btn" onclick="timerReset()">إعادة</div>
+      </div>
+    </div>`;
+}
+function setTimer(s) { buttonFeedback(); state.timerSecs=s; renderScreen(); }
+function timerToggle() {
+  buttonFeedback();
+  if(state.timerRunning) { clearInterval(state.timerInterval); state.timerRunning=false; }
+  else if(state.timerSecs>0) {
+    state.timerRunning=true;
+    state.timerInterval = setInterval(()=>{
+      if(state.timerSecs<=0) {
+        clearInterval(state.timerInterval); state.timerRunning=false;
+        vibrate([100,50,100,50,100]); playSmsTone();
+      }
+      else { state.timerSecs--; }
+      if(state.screen==='timer' && !state.locked) renderScreen();
+    }, 1000);
+  }
+  renderScreen();
+}
+function timerReset() { buttonFeedback(); clearInterval(state.timerInterval); state.timerRunning=false; state.timerSecs=0; renderScreen(); }
+
+/* ============ CALENDAR ============ */
+function renderCalendar(el) {
+  setSoftKeys('حدث', '', t('backKey'));
+  const d = new Date();
+  const year = d.getFullYear(), month = d.getMonth(), today = d.getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const months = i18n[state.lang].months;
+  let cells = '';
+  const dayNames = i18n[state.lang].daysShort;
+  dayNames.forEach(n => cells += `<div class="cal-day header">${n}</div>`);
+  for(let i=0;i<firstDay;i++) cells += `<div class="cal-day"></div>`;
+  for(let i=1;i<=daysInMonth;i++) {
+    const cls = i===today ? 'today' : i===15||i===22 ? 'has-event' : '';
+    const sel = (state.screen==='calendar' && i===state.subSel) ? 'kbd-selected' : '';
+    cells += `<div class="cal-day ${cls} ${sel}" onclick="state.subSel=${i};renderScreen();">${i}</div>`;
+  }
+  el.innerHTML = `<div class="app-header"><i class="ti ti-calendar"></i> ${months[month]} ${year}</div>
+    <div class="app-body">
+      <div class="cal-grid">${cells}</div>
+      <div style="margin-top:4px;font-size:8px;color:var(--screen-accent2);border-top:1px solid rgba(27,94,32,0.2);padding-top:3px;">
+        <div>📌 15: اجتماع العمل</div>
+        <div>📌 22: موعد الطبيب</div>
+      </div>
+    </div>`;
+}
+
+/* ============ CALCULATOR ============ */
+function renderCalculator(el) {
+  setSoftKeys(t('clearKey'), '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-calculator"></i> ${tApp('calculator')}</div>
+    <div class="app-body" style="padding:3px;">
+      <div class="calc-display" id="calcDisp">${state.calcDisp}</div>
+      <div class="calc-grid">
+        ${[['C','±','%','÷'],['7','8','9','×'],['4','5','6','-'],['1','2','3','+'],['0','.','=','=']].map((row,ri)=>
+          row.map((b,ci)=>{
+            const isOp = ['÷','×','-','+'].includes(b);
+            const isEq = b==='=';
+            const isC = b==='C'||b==='±'||b==='%';
+            const cls = isEq?'eq':isOp?'op':isC?'op':'';
+            if(ri===4&&ci===3) return '';
+            if(ri===4&&ci===2) return `<div class="calc-btn eq" style="grid-column:span 1;" onclick="calcPress('=')">=</div>`;
+            return `<div class="calc-btn ${cls}" onclick="calcPress('${b}')">${b}</div>`;
+          }).join('')
+        ).join('')}
+      </div>
+    </div>`;
+}
+function calcPress(b) {
+  buttonFeedback();
+  if(b==='C') { state.calcExpr=''; state.calcDisp='0'; state.calcNew=true; }
+  else if(b==='=') {
+    try {
+      let expr = state.calcExpr.replace('×','*').replace('÷','/');
+      let res = Function('"use strict"; return ('+expr+')')();
+      state.calcDisp = parseFloat(res.toFixed(8)).toString();
+      state.calcExpr = state.calcDisp;
+    } catch(e) { state.calcDisp='خطأ'; state.calcExpr=''; }
+  } else if(b==='±') {
+    state.calcDisp = (parseFloat(state.calcDisp)*-1).toString();
+    state.calcExpr = state.calcDisp;
+  } else if(b==='%') {
+    state.calcDisp = (parseFloat(state.calcDisp)/100).toString();
+    state.calcExpr = state.calcDisp;
+  } else {
+    if(state.calcNew && !['÷','×','-','+'].includes(b)) { state.calcExpr=''; state.calcNew=false; }
+    state.calcExpr += b;
+    state.calcDisp = state.calcExpr;
+  }
+  const d = document.getElementById('calcDisp');
+  if(d) d.textContent = state.calcDisp;
+}
+
+/* ============ NOTES ============ */
+function renderNotes(el) {
+  setSoftKeys(t('newKey'), '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-notes"></i> ${tApp('notes')}</div>
+    <div class="app-body">
+      ${state.notes.map((n,i)=>`
+        <div class="list-item" style="flex-direction:column;align-items:flex-start;">
+          <div style="font-weight:bold;">ملاحظة ${i+1}</div>
+          <div class="sub" style="white-space:pre-wrap;">${escapeHtml(n.substring(0,40))}${n.length>40?'...':''}</div>
+        </div>
+      `).join('')}
+      <textarea class="note-area" id="newNoteArea" placeholder="اكتب ملاحظة جديدة..." style="margin-top:4px;" onblur="saveNewNote(this.value)"></textarea>
+    </div>`;
+}
+function saveNewNote(val) {
+  if (val && val.trim()) { state.notes.push(val.trim()); renderScreen(); }
+}
+
+/* ============ FILES ============ */
+function renderFiles(el) {
+  setSoftKeys(t('openKey'), '', t('backKey'));
+  const dirs = [
+    { name:'الصور', icon:'ti-photo', count:'24 ملف', color:'var(--screen-accent2)' },
+    { name:'الموسيقى', icon:'ti-music', count:'15 أغنية', color:'#1565c0' },
+    { name:'الفيديو', icon:'ti-movie', count:'8 مقاطع', color:'#c62828' },
+    { name:'الوثائق', icon:'ti-file-text', count:'12 وثيقة', color:'#e65100' },
+    { name:'التطبيقات', icon:'ti-apps', count:'6 تطبيقات', color:'#6a1b9a' },
+    { name:'غير محدد', icon:'ti-folder', count:'3 ملفات', color:'var(--screen-text)' },
+  ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-folder"></i> ${tApp('files')}</div>
+    <div class="app-body">
+      <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--screen-accent2);margin-bottom:3px;padding:0 2px;">
+        <span>مساحة: 512MB</span><span>متاح: 284MB</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:44%;"></div></div>
+      ${dirs.map((d,i)=>`
+        <div class="file-row ${state.screen==='files'&&i===state.subSel?'kbd-selected':''}">
+          <i class="ti ${d.icon}" style="color:${d.color};"></i>
+          <div><div>${d.name}</div><div class="sub">${d.count}</div></div>
+          <i class="ti ti-chevron-right" style="margin-left:auto;font-size:10px;"></i>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+/* ============ GALLERY ============ */
+function renderGallery(el) {
+  setSoftKeys('عرض', '', t('backKey'));
+  const colors = ['#1b5e20','#0d47a1','#b71c1c','#e65100','#4a148c','#006064','#33691e','#1a237e','#880e4f'];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-photo"></i> ${tApp('gallery')} (24)</div>
+    <div class="app-body">
+      <div class="gallery-grid">
+        ${colors.map((c)=>`
+          <div class="gallery-thumb" style="background:${c};">
+            <i class="ti ti-photo" style="color:rgba(255,255,255,0.4);"></i>
+          </div>
+        `).join('')}
+      </div>
+      <div style="text-align:center;font-size:8px;color:var(--screen-accent2);margin-top:4px;">3×3 من 24 • صور (JPG/PNG)</div>
+    </div>`;
+}
+
+/* ============ MEDIA ============ */
+function renderMedia(el) {
+  setSoftKeys('تشغيل', '', t('backKey'));
+  const items = [
+    { name:'فيديو_001.mp4', dur:'2:34', icon:'ti-movie' },
+    { name:'فيديو_002.mp4', dur:'5:12', icon:'ti-movie' },
+    { name:'تسجيل_001.3gp', dur:'1:05', icon:'ti-video' },
+    { name:'بث_مباشر.mp4', dur:'12:30', icon:'ti-brand-youtube' },
+  ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-movie"></i> ${tApp('media')}</div>
+    <div class="app-body">
+      ${items.map((v,i)=>`
+        <div class="list-item ${state.screen==='media'&&i===state.subSel?'kbd-selected':''}">
+          <i class="ti ${v.icon}"></i>
+          <div><div>${v.name}</div><div class="sub">${v.dur}</div></div>
+          <i class="ti ti-player-play" style="margin-left:auto;font-size:11px;"></i>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+/* ============ MUSIC ============ */
+function renderMusic(el) {
+  setSoftKeys(state.musicPlaying?'إيقاف':'تشغيل', '', t('backKey'));
+  const song = state.songs[state.currentSong];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-music"></i> ${tApp('music')}</div>
+    <div class="app-body">
+      <div style="text-align:center;background:rgba(46,125,50,0.15);border-radius:4px;padding:6px;margin-bottom:4px;">
+        <i class="ti ti-disc" style="font-size:24px;color:var(--screen-accent);display:block;${state.musicPlaying?'animation:spin 3s linear infinite;':''}"></i>
+        <div style="font-size:10px;font-weight:bold;color:var(--screen-text);margin-top:2px;">${song}</div>
+        <div style="font-size:8px;color:var(--screen-accent2);">نغمات كلاسيكية</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="musicProgress" style="width:${state.musicPlaying?35:0}%;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:7px;color:var(--screen-accent2);">
+        <span>1:12</span><span>3:24</span>
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:4px;">
+        <i class="ti ti-player-skip-back" style="font-size:16px;color:var(--screen-accent);cursor:pointer;" onclick="prevSong()"></i>
+        <i class="ti ${state.musicPlaying?'ti-player-pause':'ti-player-play'}" style="font-size:20px;color:var(--screen-text);cursor:pointer;" onclick="toggleMusic()"></i>
+        <i class="ti ti-player-skip-forward" style="font-size:16px;color:var(--screen-accent);cursor:pointer;" onclick="nextSong()"></i>
+      </div>
+      ${state.songs.map((s,i)=>`
+        <div class="music-item ${i===state.currentSong?'kbd-selected':''}" onclick="state.currentSong=${i};renderScreen()">
+          <i class="ti ${i===state.currentSong&&state.musicPlaying?'ti-player-play':'ti-music'}"></i>
+          <span>${s}</span>
+          ${i===state.currentSong?'<i class="ti ti-equalizer" style="margin-left:auto;font-size:10px;"></i>':''}
+        </div>
+      `).join('')}
+    </div>
+    <style>@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}</style>`;
+}
+function toggleMusic() {
+  buttonFeedback();
+  state.musicPlaying=!state.musicPlaying;
+  renderScreen();
+}
+function prevSong() { buttonFeedback(); state.currentSong=(state.currentSong-1+state.songs.length)%state.songs.length; renderScreen(); }
+function nextSong() { buttonFeedback(); state.currentSong=(state.currentSong+1)%state.songs.length; renderScreen(); }
+
+/* ============ RADIO ============ */
+function renderRadio(el) {
+  setSoftKeys(state.radioPlaying?'إيقاف':'تشغيل', '', t('backKey'));
+  const stations = [
+    { name:'إذاعة السعودية', freq:97.5 },
+    { name:'MBC FM', freq:99.9 },
+    { name:'Rotana FM', freq:103.7 },
+    { name:'دبي FM', freq:92.0 },
+  ];
+  const curr = stations.find(s=>s.freq===state.radioFreq)||stations[0];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-radio"></i> ${tApp('radio')}</div>
+    <div class="app-body">
+      <div class="radio-display">
+        <i class="ti ti-antenna" style="font-size:16px;color:var(--screen-accent);"></i>
+        <div class="radio-freq">${state.radioFreq} MHz</div>
+        <div class="radio-name">${curr.name}</div>
+        <div class="radio-bar"><div class="radio-fill" style="width:${state.radioPlaying?70:0}%;"></div></div>
+        <div style="display:flex;justify-content:center;gap:12px;margin:4px 0;">
+          <i class="ti ti-chevron-left" style="font-size:16px;cursor:pointer;color:var(--screen-accent);" onclick="changeFreq(-0.1)"></i>
+          <i class="ti ${state.radioPlaying?'ti-player-pause':'ti-player-play'}" style="font-size:20px;cursor:pointer;color:var(--screen-text);" onclick="toggleRadio()"></i>
+          <i class="ti ti-chevron-right" style="font-size:16px;cursor:pointer;color:var(--screen-accent);" onclick="changeFreq(0.1)"></i>
+        </div>
+      </div>
+      ${stations.map(s=>`
+        <div class="list-item" onclick="state.radioFreq=${s.freq};renderScreen()">
+          <i class="ti ti-radio"></i>
+          <div><div>${s.name}</div><div class="sub">${s.freq} MHz</div></div>
+          ${s.freq===state.radioFreq?'<i class="ti ti-check" style="margin-left:auto;"></i>':''}
+        </div>
+      `).join('')}
+    </div>`;
+}
+function toggleRadio() { buttonFeedback(); state.radioPlaying=!state.radioPlaying; renderScreen(); }
+function changeFreq(d) { buttonFeedback(); state.radioFreq = Math.round((state.radioFreq+d)*10)/10; renderScreen(); }
+
+/* ============ CAMERA ============ */
+function renderCamera(el) {
+  setSoftKeys('تصوير', '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-camera"></i> ${tApp('camera')}</div>
+    <div class="app-body">
+      <div class="camera-view" id="cameraFlash">
+        <div class="camera-corners"></div>
+        <div style="text-align:center;">
+          <i class="ti ti-aperture" style="font-size:20px;opacity:0.4;"></i>
+          <div style="font-size:8px;opacity:0.6;">استعداد للتصوير</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div style="font-size:8px;color:var(--screen-accent2);">🔭 1x | ⚡ تلقائي | 🖼 2MP</div>
+        <i class="ti ti-camera-rotate" style="font-size:14px;color:var(--screen-accent2);cursor:pointer;"></i>
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;">
+        <div style="font-size:8px;color:var(--screen-accent2);cursor:pointer;background:rgba(46,125,50,0.2);padding:2px 6px;border-radius:3px;" onclick="takePhoto()">صور (24)</div>
+        <div style="font-size:8px;color:var(--screen-accent2);cursor:pointer;background:rgba(46,125,50,0.2);padding:2px 6px;border-radius:3px;">فيديو</div>
+      </div>
+    </div>`;
+}
+function takePhoto() {
+  vibrate(15);
+  const flash = document.getElementById('cameraFlash');
+  if (flash) {
+    flash.style.background = '#fff';
+    setTimeout(()=>{ flash.style.background = '#0d2010'; }, 100);
+  }
+  playTone(2000, getAudioCtx() ? getAudioCtx().currentTime : 0, 0.03, 0.1, 'square');
+}
+
+/* ============ GAMES ============ */
+function renderGames(el) {
+  setSoftKeys('تشغيل', '', t('backKey'));
+  const games = [
+    { name:'الثعبان', icon:'ti-route', score:'2450' },
+    { name:'أحجية', icon:'ti-puzzle', score:'1200' },
+    { name:'الفضاء', icon:'ti-rocket', score:'8900' },
+    { name:'السباق', icon:'ti-car', score:'5600' },
+  ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-device-gamepad"></i> ${tApp('games')}</div>
+    <div class="app-body">
+      ${games.map((g,i)=>`
+        <div class="list-item ${state.screen==='games'&&i===state.subSel?'kbd-selected':''}">
+          <i class="ti ${g.icon}"></i>
+          <div><div>${g.name}</div><div class="sub">أعلى نقاط: ${g.score}</div></div>
+          <i class="ti ti-player-play" style="margin-left:auto;font-size:11px;"></i>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+/* ============ INTERNET ============ */
+function renderInternet(el) {
+  setSoftKeys('انتقال', '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-world"></i> ${tApp('internet')}</div>
+    <div class="app-body">
+      <div style="background:rgba(46,125,50,0.1);border:1px solid rgba(27,94,32,0.3);border-radius:3px;display:flex;align-items:center;gap:3px;padding:2px 4px;margin-bottom:4px;">
+        <i class="ti ti-lock" style="font-size:9px;"></i>
+        <span style="font-size:8px;color:var(--screen-accent2);flex:1;">www.google.com</span>
+        <i class="ti ti-arrow-right" style="font-size:9px;"></i>
+      </div>
+      <div style="background:rgba(46,125,50,0.05);border:1px solid rgba(27,94,32,0.2);border-radius:3px;padding:4px;min-height:60px;">
+        <div style="font-size:10px;font-weight:bold;color:var(--screen-text);text-align:center;">Google</div>
+        <div style="font-size:8px;color:var(--screen-accent);text-align:center;margin:2px 0;">ابحث أو اكتب عنوان URL</div>
+        <div style="background:rgba(46,125,50,0.1);border:1px solid rgba(27,94,32,0.2);border-radius:3px;padding:2px 4px;font-size:9px;color:var(--screen-accent2);margin-top:4px;">🔍 بحث Google...</div>
+      </div>
+      <div style="margin-top:4px;">
+        <div style="font-size:8px;color:var(--screen-accent2);margin-bottom:2px;">مواقع مفضلة:</div>
+        <div class="list-item"><i class="ti ti-brand-google"></i> Google</div>
+        <div class="list-item"><i class="ti ti-world"></i> Wikipedia</div>
+      </div>
+    </div>`;
+}
+
+/* ============ APPS STORE ============ */
+function renderAppsStore(el) {
+  setSoftKeys('تثبيت', '', t('backKey'));
+  const appsList = [
+    { name:'WhatsApp', cat:'مراسلة', icon:'ti-brand-whatsapp', bg:'#1b5e20', size:'15MB' },
+    { name:'Snake Pro', cat:'ألعاب', icon:'ti-route', bg:'#0d47a1', size:'2MB' },
+    { name:'Flashlight', cat:'أدوات', icon:'ti-flashlight', bg:'#e65100', size:'0.5MB' },
+    { name:'FM Radio+', cat:'وسائط', icon:'ti-radio', bg:'#6a1b9a', size:'3MB' },
+  ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-apps"></i> ${tApp('apps_store')}</div>
+    <div class="app-body">
+      ${appsList.map(a=>`
+        <div class="app-store-item">
+          <div class="app-icon-small" style="background:${a.bg};">
+            <i class="ti ${a.icon}" style="color:white;"></i>
+          </div>
+          <div><div style="font-size:9px;">${a.name}</div><div class="sub">${a.cat} • ${a.size}</div></div>
+          <button class="install-btn">تثبيت</button>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+/* ============ BLUETOOTH ============ */
+function renderBluetooth(el) {
+  setSoftKeys('بحث', '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-bluetooth"></i> ${tApp('bluetooth')}</div>
+    <div class="app-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 2px;border-bottom:1px solid rgba(27,94,32,0.2);margin-bottom:3px;">
+        <span style="font-size:9px;color:var(--screen-text);font-weight:bold;">البلوتوث: مفعّل</span>
+        <div class="toggle-btn"></div>
+      </div>
+      <div style="font-size:8px;color:var(--screen-accent2);margin-bottom:3px;">الأجهزة المتاحة:</div>
+      ${state.btDevices.map((d,i)=>`
+        <div class="bt-device">
+          <div>
+            <div style="font-size:9px;">${d.name}</div>
+            <div class="sub">${d.type} ${d.paired?'• مقترن':''}</div>
+          </div>
+          <button class="pair-btn" onclick="toggleBtPair(${i})">${d.paired?'قطع':'اقتران'}</button>
+        </div>
+      `).join('')}
+    </div>`;
+}
+function toggleBtPair(i) {
+  buttonFeedback();
+  state.btDevices[i].paired = !state.btDevices[i].paired;
+  renderScreen();
+}
+
+/* ============ RECEIVED FILES ============ */
+function renderReceivedFiles(el) {
+  setSoftKeys(t('openKey'), '', t('backKey'));
+  const icons = { image:'ti-photo', doc:'ti-file-text', music:'ti-music' };
+  el.innerHTML = `<div class="app-header"><i class="ti ti-download"></i> ${tApp('received_files')}</div>
+    <div class="app-body">
+      ${state.receivedFiles.map(f=>`
+        <div class="file-row">
+          <i class="ti ${icons[f.type]||'ti-file'}"></i>
+          <div><div>${f.name}</div><div class="sub">مستلم عبر البلوتوث</div></div>
+          <span class="file-size">${f.size}</span>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+/* ============ DATA MANAGEMENT ============ */
+function renderDataMgmt(el) {
+  setSoftKeys('تفاصيل', '', t('backKey'));
+  const data = [
+    { name:'الذاكرة الداخلية', used:44, total:'512MB' },
+    { name:'بطاقة الذاكرة', used:72, total:'2GB' },
+    { name:'ذاكرة الهاتف', used:30, total:'32MB' },
+  ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-database"></i> ${tApp('data_mgmt')}</div>
+    <div class="app-body">
+      ${data.map(d=>`
+        <div style="margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--screen-text);margin-bottom:1px;">
+            <span>${d.name}</span><span>${d.used}% من ${d.total}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${d.used}%;"></div></div>
+        </div>
+      `).join('')}
+      <div style="font-size:8px;color:var(--screen-accent2);border-top:1px solid rgba(27,94,32,0.2);padding-top:4px;margin-top:2px;">
+        <div style="cursor:pointer;padding:2px 0;">🗑 مسح البيانات المؤقتة</div>
+        <div style="cursor:pointer;padding:2px 0;">📂 نسخ احتياطي</div>
+        <div style="cursor:pointer;padding:2px 0;">📲 استعادة البيانات</div>
+      </div>
+    </div>`;
+}
+
+/* ============ PROFILES (with real sound/vibration toggle) ============ */
+function renderProfiles(el) {
+  setSoftKeys(t('activateKey'), '', t('backKey'));
+  const profiles = [
+    { name:'عام', icon:'ti-volume', sound:true, vib:true },
+    { name:'صامت', icon:'ti-volume-off', sound:false, vib:false },
+    { name:'اجتماع', icon:'ti-briefcase', sound:false, vib:true },
+    { name:'رنين فقط', icon:'ti-bell', sound:true, vib:false },
+    { name:'خارجي', icon:'ti-building', sound:true, vib:true },
+  ];
+  const isActive = (p) => p.sound===state.soundOn && p.vib===state.vibrationOn;
+  el.innerHTML = `<div class="app-header"><i class="ti ti-user-circle"></i> ${tApp('profiles')}</div>
+    <div class="app-body">
+      ${profiles.map((p,i)=>`
+        <div class="list-item ${state.screen==='profiles'&&i===state.subSel?'kbd-selected':''}" onclick="activateProfile(${i})">
+          <i class="ti ${p.icon}"></i>
+          <span>${p.name}</span>
+          ${isActive(p)?'<i class="ti ti-check" style="margin-left:auto;color:var(--screen-accent2);"></i>':''}
+        </div>
+      `).join('')}
+    </div>`;
+}
+function activateProfile(i) {
+  const profiles = [
+    { sound:true, vib:true }, { sound:false, vib:false }, { sound:false, vib:true },
+    { sound:true, vib:false }, { sound:true, vib:true },
+  ];
+  state.soundOn = profiles[i].sound;
+  state.vibrationOn = profiles[i].vib;
+  vibrate(20);
+  showToast('تم التفعيل');
+  renderScreen();
+}
+
+/* ============ THEMES (real, switches CSS vars incl. Nokia 1100/3310/N95) ============ */
+function renderThemes(el) {
+  setSoftKeys(t('applyKey'), '', t('backKey'));
+  const keys = Object.keys(themeDefs);
+  el.innerHTML = `<div class="app-header"><i class="ti ti-palette"></i> ${tApp('themes')}</div>
+    <div class="app-body">
+      ${keys.map((key,i)=>{
+        const th = themeDefs[key];
+        const sel = state.screen==='themes' && i===state.subSel ? 'kbd-selected' : '';
+        return `
+        <div class="theme-item ${sel}" onclick="applyThemeUI('${key}')">
+          <div style="display:flex;gap:2px;">
+            ${th.swatches.map(c=>`<div class="theme-swatch" style="background:${c};"></div>`).join('')}
+          </div>
+          <span>${th.name[state.lang]}</span>
+          ${key===state.currentTheme?'<i class="ti ti-check" style="margin-left:auto;color:var(--screen-accent2);"></i>':''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+function applyThemeUI(key) {
+  applyTheme(key);
+  buttonFeedback();
+  showToast(t('themeApplied'));
+  renderScreen();
+}
+
+/* ============ APP MANAGER ============ */
+function renderAppManager(el) {
+  setSoftKeys('تفاصيل', '', t('backKey'));
+  const mgApps = [
+    { name:'الرسائل', size:'45KB', built:true },
+    { name:'الخرائط', size:'1.2MB', built:false },
+    { name:'المتصفح', size:'230KB', built:true },
+    { name:'Snake', size:'78KB', built:false },
+  ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-puzzle"></i> ${tApp('app_manager')}</div>
+    <div class="app-body">
+      ${mgApps.map(a=>`
+        <div class="list-item">
+          <i class="ti ti-apps"></i>
+          <div><div>${a.name}</div><div class="sub">${a.size} ${a.built?'• مدمج':''}</div></div>
+          ${!a.built?`<i class="ti ti-trash" style="margin-left:auto;font-size:11px;color:#c62828;cursor:pointer;"></i>`:''}
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+/* ============ SECURITY ============ */
+function renderSecurity(el) {
+  setSoftKeys('تعديل', '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-shield"></i> ${tApp('security')}</div>
+    <div class="app-body">
+      <div class="settings-item"><span><i class="ti ti-lock"></i> رمز القفل</span><span class="arrow">●●●● ›</span></div>
+      <div class="settings-item"><span><i class="ti ti-key"></i> رمز PIN</span><span class="arrow">مفعّل ›</span></div>
+      <div class="settings-item"><span><i class="ti ti-sim-card"></i> قفل SIM</span><span class="arrow">معطّل ›</span></div>
+      <div class="settings-item"><span><i class="ti ti-device-mobile-lock"></i> قفل الجهاز</span><span class="arrow">›</span></div>
+      <div class="settings-item"><span><i class="ti ti-certificate"></i> الشهادات</span><span class="arrow">›</span></div>
+    </div>`;
+}
+
+/* ============ NETWORK ============ */
+function renderNetwork(el) {
+  setSoftKeys('تعديل', '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-wifi"></i> ${tApp('network')}</div>
+    <div class="app-body">
+      <div class="settings-item"><span><i class="ti ti-wifi"></i> WiFi</span><span class="arrow">مفعّل ›</span></div>
+      <div class="settings-item"><span><i class="ti ti-signal-4g"></i> بيانات الجوال</span><span class="arrow">2G/3G ›</span></div>
+      <div class="settings-item"><span><i class="ti ti-access-point"></i> نقطة اتصال</span><span class="arrow">معطّل ›</span></div>
+      <div class="settings-item"><span><i class="ti ti-router"></i> اختيار الشبكة</span><span class="arrow">تلقائي ›</span></div>
+      <div class="settings-item"><span><i class="ti ti-antenna-bars-5"></i> وضع الطيران</span><span class="arrow">معطّل ›</span></div>
+    </div>`;
+}
+
+/* ============ HOMESCREEN SETTINGS ============ */
+function renderHomescreenSettings(el) {
+  setSoftKeys('تعديل', '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-layout"></i> ${tApp('homescreen')}</div>
+    <div class="app-body">
+      <div class="settings-item"><span>نمط الشاشة</span><span class="arrow">كلاسيك ›</span></div>
+      <div class="settings-item" onclick="openApp('wallpapers')"><span>خلفية الشاشة</span><span class="arrow">›</span></div>
+      <div class="settings-item"><span>شريط المعلومات</span><span class="arrow">›</span></div>
+      <div class="settings-item"><span>اختصارات سريعة</span><span class="arrow">›</span></div>
+      <div class="settings-item"><span>حجم الشبكة</span><span class="arrow">3×4 ›</span></div>
+    </div>`;
+}
+
+/* ============ RINGTONES (real playback + vibration toggle) ============ */
+function renderRingtones(el) {
+  setSoftKeys('تشغيل', '', t('backKey'));
+  const tones = ['Nokia Tune','Grand Vals','Beep Beep','Ascending','Digital Bell','Ring Ring'];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-volume"></i> ${tApp('ringtones')}</div>
+    <div class="app-body">
+      <div class="settings-item" onclick="toggleSoundSetting()">
+        <span><i class="ti ti-volume"></i> الصوت</span>
+        <div class="toggle-btn ${state.soundOn?'':'off'}"></div>
+      </div>
+      <div class="settings-item" onclick="toggleVibrationSetting()">
+        <span><i class="ti ti-vibrate"></i> الاهتزاز</span>
+        <div class="toggle-btn ${state.vibrationOn?'':'off'}"></div>
+      </div>
+      <div style="font-size:8px;color:var(--screen-accent2);margin:3px 0 1px;">النغمات (اضغط للتشغيل):</div>
+      ${tones.map((t2,i)=>`
+        <div class="list-item ${i===state.selectedRingtone?'kbd-selected':''}" onclick="selectRingtone(${i})">
+          <i class="ti ti-music"></i>
+          <span>${t2}</span>
+          ${i===state.selectedRingtone?'<i class="ti ti-check" style="margin-left:auto;color:var(--screen-accent2);"></i>':''}
+        </div>
+      `).join('')}
+    </div>`;
+}
+function toggleSoundSetting() {
+  state.soundOn = !state.soundOn;
+  if (state.soundOn) playKeyClick();
+  vibrate(10);
+  renderScreen();
+}
+function toggleVibrationSetting() {
+  state.vibrationOn = !state.vibrationOn;
+  if (state.vibrationOn) vibrate(20);
+  renderScreen();
+}
+function selectRingtone(i) {
+  state.selectedRingtone = i;
+  buttonFeedback();
+  playNokiaTune();
+  showToast(t('ringtoneSet'));
+  renderScreen();
+}
+
+/* ============ WALLPAPERS (real, applies to home screen bg tint) ============ */
+function renderWallpapers(el) {
+  setSoftKeys(t('applyKey'), '', t('backKey'));
+  el.innerHTML = `<div class="app-header"><i class="ti ti-photo"></i> ${tApp('wallpapers')}</div>
+    <div class="app-body">
+      <div class="gallery-grid">
+        ${wallpaperDefs.map((c,i)=>`
+          <div class="gallery-thumb ${state.screen==='wallpapers'&&i===state.subSel?'kbd-selected':''}" style="background:${c};border:${i===state.currentWallpaper?'2px solid var(--screen-accent2)':'1px solid rgba(0,0,0,0.2)'};" onclick="applyWallpaperUI(${i})">
+            ${i===state.currentWallpaper?'<i class="ti ti-check" style="color:white;font-size:14px;"></i>':''}
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:4px;font-size:8px;color:var(--screen-accent2);border-top:1px solid rgba(27,94,32,0.2);padding-top:3px;">
+        <div style="cursor:pointer;">📷 استخدام صورة من المعرض</div>
+      </div>
+    </div>`;
+}
+function applyWallpaperUI(i) {
+  applyWallpaper(i);
+  buttonFeedback();
+  renderScreen();
+}
+
+/* ============ LANGUAGE ============ */
+function renderLanguage(el) {
+  setSoftKeys(t('applyKey'), '', t('backKey'));
+  const langs = [ {id:'ar', label:'العربية'}, {id:'en', label:'English'} ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-language"></i> ${tApp('language')}</div>
+    <div class="app-body">
+      ${langs.map((l,i)=>`
+        <div class="lang-item ${state.screen==='language'&&i===state.subSel?'kbd-selected':''}" onclick="setLanguage('${l.id}')">
+          <span>${l.label}</span>
+          ${state.lang===l.id?'<i class="ti ti-check" style="color:var(--screen-accent2);"></i>':''}
+        </div>
+      `).join('')}
+    </div>`;
+}
+function setLanguage(lang) {
+  state.lang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = i18n[lang].dir;
+  buttonFeedback();
+  showToast(t('langChanged'));
+  renderScreen();
+  buildSidebar();
+  updateSidebar();
+}
+
+/* ============ SETTINGS (hub) ============ */
+function renderSettings(el) {
+  setSoftKeys(t('openKey'), '', t('backKey'));
+  const items = [
+    { name: tApp('ringtones'), icon:'ti-volume', id:'ringtones' },
+    { name: tApp('homescreen'), icon:'ti-brightness', id:'homescreen' },
+    { name: tApp('network'), icon:'ti-wifi', id:'network' },
+    { name: tApp('security'), icon:'ti-shield', id:'security' },
+    { name: tApp('app_manager'), icon:'ti-apps', id:'app_manager' },
+    { name: tApp('themes'), icon:'ti-palette', id:'themes' },
+    { name: tApp('profiles'), icon:'ti-user-circle', id:'profiles' },
+    { name: tApp('language'), icon:'ti-language', id:'language' },
+    { name: tApp('data_mgmt'), icon:'ti-database', id:'data_mgmt' },
+    { name: state.lang==='ar'?'معلومات الهاتف':'Phone info', icon:'ti-info-circle', id:null },
+  ];
+  el.innerHTML = `<div class="app-header"><i class="ti ti-settings"></i> ${tApp('settings')}</div>
+    <div class="app-body">
+      ${items.map((it,i)=>`
+        <div class="settings-item ${state.screen==='settings'&&i===state.subSel?'kbd-selected':''}" onclick="${it.id?`openApp('${it.id}')`:''}" style="${it.id?'cursor:pointer;':''}">
+          <span><i class="ti ${it.icon}" aria-hidden="true"></i> ${it.name}</span>
+          <span class="arrow"><i class="ti ti-chevron-right" style="font-size:10px;"></i></span>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+/* ============ NAVIGATION: list lengths per screen for up/down arrow support ============ */
+function currentListLength() {
+  switch(state.screen) {
+    case 'messages': return state.messages.length;
+    case 'contacts': {
+      const q = (state.contactSearch||'').trim().toLowerCase();
+      return state.contacts.filter(c => !q || c.name.toLowerCase().includes(q) || c.num.includes(q)).length;
+    }
+    case 'calls': return state.calls.length;
+    case 'files': return 6;
+    case 'media': return 4;
+    case 'games': return 4;
+    case 'profiles': return 5;
+    case 'themes': return Object.keys(themeDefs).length;
+    case 'wallpapers': return wallpaperDefs.length;
+    case 'language': return 2;
+    case 'settings': return 10;
+    case 'calendar': return new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
+    default: return 0;
+  }
+}
+
+function openApp(id) {
+  vibrate(8);
+  state.screen = id;
+  state.menuSel = apps.findIndex(a=>a.id===id);
+  state.subSel = 0;
+  if (id === 'calendar') state.subSel = new Date().getDate();
+  renderScreen();
+  updateSidebar();
+}
+
+/* ============ KEY HANDLERS ============ */
+function pressLeft() {
+  // handled by long-press system for lock/boot; short tap still does softkey-left action
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.screen==='home') openApp('menu');
+  else if(state.screen==='menu') { state.screen='home'; renderScreen(); updateSidebar(); }
+  else if(state.screen==='calculator') calcPress('C');
+  else if(state.screen==='stopwatch') swToggle();
+  else if(state.screen==='timer') timerToggle();
+  else if(state.screen==='music') toggleMusic();
+  else if(state.screen==='radio') toggleRadio();
+  else if(state.screen==='alarm') addAlarm();
+  else if(state.screen==='messages') {
+    if (state.contacts[0]) startCompose(state.contacts[0]);
+  }
+  else if(state.screen==='compose') sendComposed();
+  else if(state.screen==='contacts') {
+    if (state.contacts[0]) startCompose(state.contacts[0]);
+  }
+  else if(state.screen==='calls') pressCall();
+  else if(state.screen==='themes') applyThemeUI(Object.keys(themeDefs)[state.subSel]);
+  else if(state.screen==='wallpapers') applyWallpaperUI(state.subSel);
+  else if(state.screen==='language') setLanguage(state.subSel===0?'ar':'en');
+  else if(state.screen==='profiles') activateProfile(state.subSel);
+  else if(state.screen==='dialer') pressCall();
+  else { state.screen='menu'; renderScreen(); updateSidebar(); }
+}
+function pressRight() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.screen==='home') {}
+  else if(state.screen==='dialer') { state.dialer=state.dialer.slice(0,-1); renderScreen(); }
+  else if(state.screen==='compose') composeBackspace();
+  else pressBack();
+}
+function pressMenu() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  state.screen='menu'; renderScreen(); updateSidebar();
+}
+function pressOK() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.screen==='home') { state.screen='menu'; renderScreen(); updateSidebar(); }
+  else if(state.screen==='menu') {
+    const app = apps[state.menuSel];
+    if(app) openApp(app.id);
+  }
+  else if(state.screen==='calculator') calcPress('=');
+  else if(state.screen==='stopwatch') swToggle();
+  else if(state.screen==='alarm') toggleAlarm(0);
+  else if(state.screen==='music') toggleMusic();
+  else if(state.screen==='messages') {
+    const m = state.messages[state.subSel];
+    if (m) { const c = state.contacts.find(c=>c.name===m.from) || state.contacts[0]; startCompose(c); }
+  }
+  else if(state.screen==='contacts') {
+    const q = (state.contactSearch||'').trim().toLowerCase();
+    const filtered = state.contacts.filter(c => !q || c.name.toLowerCase().includes(q) || c.num.includes(q));
+    const c = filtered[state.subSel];
+    if (c) startCompose(c);
+  }
+  else if(state.screen==='compose') sendComposed();
+  else if(state.screen==='calls') {
+    const c = state.calls[state.subSel];
+    if (c) dialContact((state.contacts.find(x=>x.name===c.name)||{}).num||'');
+  }
+  else if(state.screen==='themes') applyThemeUI(Object.keys(themeDefs)[state.subSel]);
+  else if(state.screen==='wallpapers') applyWallpaperUI(state.subSel);
+  else if(state.screen==='language') setLanguage(state.subSel===0?'ar':'en');
+  else if(state.screen==='profiles') activateProfile(state.subSel);
+  else if(state.screen==='settings') {
+    const ids = ['ringtones','homescreen','network','security','app_manager','themes','profiles','language','data_mgmt',null];
+    const id = ids[state.subSel];
+    if (id) openApp(id);
+  }
+  else if(state.screen==='dialer') pressCall();
+}
+function pressBack() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.screen==='home') {}
+  else if(state.screen==='menu') { state.screen='home'; renderScreen(); updateSidebar(); }
+  else if(state.screen==='compose') { state.screen='messages'; renderScreen(); updateSidebar(); }
+  else { state.screen='menu'; renderScreen(); updateSidebar(); }
+}
+function pressCall() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.dialer) {
+    const contact = state.contacts.find(c => c.num === state.dialer);
+    simulateCall(contact ? contact.name : state.dialer, state.dialer);
+    showToast((contact?contact.name:state.dialer) + ' - ' + (state.lang==='ar'?'جاري الاتصال...':'Calling...'));
+    vibrate([30,20,30]);
+    state.dialer = '';
+    state.screen = 'calls';
+    renderScreen();
+    updateSidebar();
+  }
+  else { state.screen='dialer'; renderScreen(); updateSidebar(); }
+}
+function pressEnd() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  state.dialer='';
+  state.screen='home';
+  renderScreen();
+  updateSidebar();
+}
+function pressUp() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if (state.screen==='menu') { state.menuSel=Math.max(0,state.menuSel-1); renderScreen(); return; }
+  if (state.screen==='radio') { changeFreq(0.1); return; }
+  if (state.screen==='calendar') { state.subSel = Math.max(1, state.subSel-1); renderScreen(); return; }
+  const len = currentListLength();
+  if (len > 0) {
+    state.subSel = Math.max(0, (state.subSel||0) - 1);
+    renderScreen();
+    scrollSelectedIntoView();
+  }
+}
+function pressDown() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if (state.screen==='menu') { state.menuSel=Math.min(apps.length-1,state.menuSel+1); renderScreen(); return; }
+  if (state.screen==='radio') { changeFreq(-0.1); return; }
+  if (state.screen==='calendar') {
+    const max = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
+    state.subSel = Math.min(max, state.subSel+1); renderScreen(); return;
+  }
+  const len = currentListLength();
+  if (len > 0) {
+    state.subSel = Math.min(len-1, (state.subSel||0) + 1);
+    renderScreen();
+    scrollSelectedIntoView();
+  }
+}
+function pressLeft2() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.screen==='music') prevSong();
+  else if(state.screen==='menu') { state.menuSel=Math.max(0,state.menuSel-3); renderScreen(); }
+  else pressUp();
+}
+function pressRight2() {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.screen==='music') nextSong();
+  else if(state.screen==='menu') { state.menuSel=Math.min(apps.length-1,state.menuSel+3); renderScreen(); }
+  else pressDown();
+}
+function scrollSelectedIntoView() {
+  setTimeout(()=>{
+    const sel = document.querySelector('.kbd-selected');
+    if (sel) sel.scrollIntoView({block:'nearest'});
+  }, 0);
+}
+
+function pressNum(n) {
+  if (state.locked || state.booting) return;
+  buttonFeedback();
+  if(state.screen==='calculator') { calcPress(n); return; }
+  if(state.screen==='compose') {
+    if (n==='#') { toggleT9(); return; }
+    if (n==='*') { composeBackspace(); return; }
+    composeTypeDigit(n);
+    return;
+  }
+  if(state.screen==='home'||state.screen==='dialer') {
+    state.screen='dialer'; state.dialer+=n; renderScreen();
+    return;
+  }
+}
+
+/* ============ SIDEBAR ============ */
+function buildSidebar() {
+  const list = document.getElementById('appList');
+  const cats = [...new Set(apps.map(a => a.cat))];
+  let html = '';
+  cats.forEach(cat => {
+    html += `<div class="section-divider">${i18n[state.lang].cats[cat]}</div>`;
+    apps.filter(a=>a.cat===cat).forEach(app => {
+      html += `<button class="app-btn" id="sbtn_${app.id}" onclick="openApp('${app.id}')">
+        <i class="ti ${app.icon}" aria-hidden="true"></i>${tApp(app.id)}
+      </button>`;
+    });
+  });
+  list.innerHTML = html;
+  const ht = document.getElementById('helpTitle');
+  const hb = document.getElementById('helpBody');
+  if (ht) ht.textContent = t('controlsTitle');
+  if (hb) hb.innerHTML = t('controlsBody').map(line=>`<div>${line}</div>`).join('');
+}
+
+function updateSidebar() {
+  document.querySelectorAll('.app-btn').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('sbtn_'+state.screen);
+  if(btn) { btn.classList.add('active'); btn.scrollIntoView({block:'nearest'}); }
+}
+
+/* ============ PHYSICAL KEYBOARD SUPPORT ============ */
+document.addEventListener('keydown', function(e) {
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return; // don't hijack typing in search/notes
+  switch(e.key) {
+    case 'ArrowUp': e.preventDefault(); pressUp(); break;
+    case 'ArrowDown': e.preventDefault(); pressDown(); break;
+    case 'ArrowLeft': e.preventDefault(); pressLeft2(); break;
+    case 'ArrowRight': e.preventDefault(); pressRight2(); break;
+    case 'Enter': e.preventDefault(); pressOK(); break;
+    case 'Escape': case 'Backspace': e.preventDefault(); pressBack(); break;
+    default:
+      if (/^[0-9*#]$/.test(e.key)) pressNum(e.key);
+  }
+});
+
+/* ============ INIT ============ */
+function initPhone() {
+  applyTheme('classic');
+  buildSidebar();
+  setupLongPress();
+  updateLockClock();
+  // single lightweight ticking interval instead of full re-render every second
+  setInterval(tickClock, 1000);
+  // initial render of the (locked) screen content so it's ready once unlocked
+  state.screen = 'home';
+  renderScreen();
+}
+
+initPhone();
+</script>
+</body>
+</html>
